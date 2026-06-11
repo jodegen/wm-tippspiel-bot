@@ -30,6 +30,8 @@ app:
     notify-role-id: ${DISCORD_NOTIFY_ROLE_ID:}
   reminder:
     lead-minutes: ${REMINDER_LEAD_MINUTES:60}
+  kickoff-notice:
+    lead-minutes: ${KICKOFF_NOTICE_LEAD_MINUTES:10}
   football-data:
     base-url: ${FOOTBALL_DATA_BASE_URL:https://api.football-data.org/v4}
     api-key: ${FOOTBALL_DATA_API_KEY:}
