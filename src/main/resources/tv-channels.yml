@@ -1,0 +1,7 @@
+# Manuell gepflegtes TV-Sender-Mapping (kein zuverlässiges API; RTL hält 2026 keine Rechte).
+# Schlüssel = football-data.org Match-ID, Wert = Sender. Wird beim Sync in matches.channel
+# geschrieben und vom Sync-Upsert nicht überschrieben (FR-004).
+channels:
+  # 537001: "ARD"
+  # 537002: "ZDF"
+  # 537003: "MagentaTV"

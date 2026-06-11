@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: wm-tippspiel
+  # Kein Web-Server — der Bot lebt über die JDA-Gateway-Verbindung; WebClient ist nur HTTP-Client.
+  main:
+    web-application-type: none
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/wmtippspiel}
+    username: ${SPRING_DATASOURCE_USERNAME:wmtippspiel}
+    password: ${SPRING_DATASOURCE_PASSWORD:wmtippspiel}
+  # Schema kommt AUSSCHLIESSLICH von Liquibase (Verfassung Prinzip II) — kein JPA/ddl-auto.
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+app:
+  timezone-display: ${APP_TIMEZONE_DISPLAY:Europe/Berlin}
+  discord:
+    token: ${DISCORD_TOKEN:}
+    guild-id: ${DISCORD_GUILD_ID:}
+    announce-channel-id: ${DISCORD_ANNOUNCE_CHANNEL_ID:}
+    board-channel-id: ${DISCORD_BOARD_CHANNEL_ID:}
+  football-data:
+    base-url: ${FOOTBALL_DATA_BASE_URL:https://api.football-data.org/v4}
+    api-key: ${FOOTBALL_DATA_API_KEY:}
+  odds:
+    enabled: ${ODDS_ENABLED:false}
+    base-url: ${ODDS_BASE_URL:https://api.the-odds-api.com/v4}
+    api-key: ${ODDS_API_KEY:}
+
+logging:
+  level:
+    com.example.wmtippspiel: INFO
