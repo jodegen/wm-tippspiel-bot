@@ -121,6 +121,24 @@ public class MatchRepository {
                 .optional();
     }
 
+    /** Projektion des zuletzt gemeldeten Standes (F8). */
+    public record NotifiedScore(int home, int away) {
+    }
+
+    /** Liefert den zuletzt für Tor-Pings gemeldeten Stand; leer, wenn das Spiel (noch) nicht in der DB ist. */
+    public Optional<NotifiedScore> getNotifiedScore(long matchId) {
+        return jdbc.sql("SELECT notified_home, notified_away FROM matches WHERE id = :id")
+                .param("id", matchId)
+                .query((rs, rowNum) -> new NotifiedScore(rs.getInt("notified_home"), rs.getInt("notified_away")))
+                .optional();
+    }
+
+    public void updateNotifiedScore(long matchId, int home, int away) {
+        jdbc.sql("UPDATE matches SET notified_home = :h, notified_away = :a WHERE id = :id")
+                .param("h", home).param("a", away).param("id", matchId)
+                .update();
+    }
+
     public void updateOdds(long id, java.math.BigDecimal home, java.math.BigDecimal draw, java.math.BigDecimal away) {
         jdbc.sql("UPDATE matches SET odds_home = :h, odds_draw = :d, odds_away = :a WHERE id = :id")
                 .param("h", home).param("d", draw).param("a", away).param("id", id)

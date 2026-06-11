@@ -232,6 +232,18 @@ class PersistenceIntegrationTest {
         assertThat(botMessages.findByKey("board:today").orElseThrow().messageId()).isEqualTo("msg2");
     }
 
+    @Test
+    @DisplayName("notified-score (F8): Default 0, Update und Lesen über echtes Schema (Changeset 008)")
+    void notifiedScoreRoundTrip() {
+        matches.upsert(scheduled(70L));
+        assertThat(matches.getNotifiedScore(70L)).contains(new MatchRepository.NotifiedScore(0, 0));
+
+        matches.updateNotifiedScore(70L, 2, 1);
+        assertThat(matches.getNotifiedScore(70L)).contains(new MatchRepository.NotifiedScore(2, 1));
+
+        assertThat(matches.getNotifiedScore(999L)).isEmpty();
+    }
+
     private static Match scheduled(long id) {
         return new Match(id, "Team A", "Team B", KICKOFF, Stage.GROUP_STAGE, "A", null,
                 null, null, null, null, null, MatchStatus.SCHEDULED, false, false);

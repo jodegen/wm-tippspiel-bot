@@ -71,6 +71,22 @@ Ablauf beim Start: Liquibase migriert → JDA verbindet sich dauerhaft mit dem
 Gateway → Slash-Commands werden guild-scoped registriert → Board-Slots werden
 gepostet bzw. editiert.
 
+## Live-Tor-Benachrichtigungen (F8)
+
+Während laufender Spiele postet der Bot zeitnah „⚽ TOR!"-Nachrichten in den
+Announce-Channel (mit Role-Ping). Der `liveGoalPoll`-Job fragt nur im Live-Fenster
+(`kickoff` … `kickoff + 2,5 h`, Status SCHEDULED/IN_PLAY) den aktuellen Stand über
+die bestehende football-data.org-Anbindung ab und erkennt Tore per Score-Diff
+gegen den persistierten gemeldeten Stand (`notified_home/away`).
+
+- Mehrere Tore zwischen zwei Polls → mehrere Posts (laufender Stand).
+- VAR-Rücknahme → „⛔ Tor aberkannt"-Notiz (ohne Ping), kein Tor-Post.
+- Neustart mitten im Spiel → keine Dopplungen; verpasste Tore werden nachgereicht.
+- Die Event-Quelle ist hinter `GoalEventSource` gekapselt (Default: Score-Diff-
+  Polling) und später gegen Webhook/WebSocket austauschbar.
+
+Optional konfigurierbar: `APP_JOBS_LIVE_GOAL_POLL_INTERVAL_MS` (Default 60000).
+
 ## WM-Notify (Rolle)
 
 Benachrichtigungen laufen ausschließlich über die WM-Notify-Rolle

@@ -43,6 +43,16 @@ public class AnnounceChannel {
         action.queue(ok -> { }, err -> log.warn("Announce-Post fehlgeschlagen: {}", err.getMessage()));
     }
 
+    /** Postet ein Embed OHNE Role-Ping (z. B. Tor-Korrektur-Notiz, F8). */
+    public void postPlain(MessageEmbed embed) {
+        TextChannel channel = resolve();
+        if (channel == null) {
+            return;
+        }
+        channel.sendMessageEmbeds(embed)
+                .queue(ok -> { }, err -> log.warn("Announce-Post (plain) fehlgeschlagen: {}", err.getMessage()));
+    }
+
     /** Postet eine Nachricht, die gezielt die genannten Nutzer pingt (Tipp-Erinnerung). */
     public void postUserPing(String content) {
         TextChannel channel = resolve();

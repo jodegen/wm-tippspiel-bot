@@ -30,10 +30,11 @@ Alle Anstoßzeiten werden von der API in UTC geliefert und in der DB als UTC ges
 | `stage` | TEXT | GROUP_STAGE, LAST_16, QUARTER_FINAL, … |
 | `channel` | TEXT | TV-Sender, manuell gepflegt |
 | `odds_home` / `odds_draw` / `odds_away` | NUMERIC | Buchmacher-Quoten (nullable) |
-| `home_score` / `away_score` | INT | Endstand (null bis Abpfiff) |
+| `home_score` / `away_score` | INT | Aktueller/Endstand (null bis Anpfiff; während des Spiels fortlaufend per Sync aktualisiert) |
 | `status` | TEXT | SCHEDULED / IN_PLAY / FINISHED |
 | `revealed` | BOOLEAN | Tipps bereits offengelegt? |
 | `evaluated` | BOOLEAN | Punkte bereits vergeben? |
+| `notified_home` / `notified_away` | INT | Zuletzt für Tor-Pings gemeldeter Stand (F8); getrennt vom tatsächlichen `home_score`/`away_score`, damit ein Bot-Neustart keine Tore doppelt/gar nicht meldet (default 0 ab Anpfiff) |
 
 ### `tips`
 | Feld | Typ | Beschreibung |
@@ -106,6 +107,20 @@ Statt den Spielplan nur on-demand per Command anzuzeigen, hält der Bot in einem
 
 **Wichtige Voraussetzung:** Interaktive Komponenten (Buttons/Select-Menus) erfordern einen dauerhaft per Gateway verbundenen Bot, der Interaction-Events empfängt. Reine `@Scheduled`-Jobs genügen dafür nicht (sie können nur über REST editieren/posten). Die Architektur muss also einen laufenden Gateway-Listener vorsehen, nicht nur Cron.
 
+### F8 — Live-Tor-Benachrichtigungen
+**Automatisch während laufender Spiele.** Sobald in einem laufenden Spiel ein Tor fällt, postet der Bot zeitnah eine Benachrichtigung in den Announce-Channel (z. B. „⚽ **TOR!** Deutschland 1:0 Curaçao — 23.'"). Datenquelle ist [football-data.org](https://www.football-data.org/) (kostenlos) — der Anbieter liefert **keinen echten Push**; die Echtzeit-Wahrnehmung entsteht ausschließlich backend-seitig durch Polling im Service.
+
+**Architektur-Prinzip:**
+- Das Polling liegt **zentral im Spring-Boot-Service**, nicht beim User. Die Discord-User bekommen reines **Push** (den Channel-Ping), keine eigene Abfrage.
+- Die Event-Quelle ist hinter einem gemeinsamen Interface `GoalEventSource` abstrahiert. Die konkrete Implementierung (jetzt: **Score-Diff-Polling** gegen football-data.org) muss später gegen **Webhook** oder **WebSocket** austauschbar sein, ohne dass Goal-Detector oder Discord-Posting sich ändern.
+
+**Komponenten:**
+- **Live-Polling-Fenster:** Scores werden nur zwischen `kickoff` und `kickoff + 2.5h` abgefragt, und nur für Spiele mit Status `IN_PLAY`/`SCHEDULED` im Zeitfenster. Außerhalb des Fensters findet **kein** Score-Polling statt, um im API-Rate-Limit zu bleiben (football-data.org: 10 Req/Min). Das Pollintervall im Fenster ist konfigurierbar (Default 60s).
+- **Goal-Detector:** Hält je Match den zuletzt gemeldeten Spielstand (`notified_home`/`notified_away`). Bei einer Differenz zum neuen Stand wird **je zusätzlichem Tor** ein `GoalEvent` erzeugt (Team, neuer Stand, ggf. Spielminute) und der gespeicherte Stand aktualisiert. Muss **idempotent** sein: ein doppelt geliefertes oder erneut gepolltes Update darf keinen zweiten Ping auslösen. Auch **Stand-Korrekturen nach unten** (z. B. aberkanntes Tor via VAR) müssen sauber behandelt werden — der gemeldete Stand wird angepasst, ohne eine Fehl-Benachrichtigung auszulösen.
+- **Discord-Posting:** Eigene Methode, die ein `GoalEvent` als Embed/Nachricht in den Announce-Channel postet. Identisch nutzbar, **egal aus welcher Event-Quelle** (`GoalEventSource`) das Event stammt.
+
+**Wichtige Voraussetzung:** Der zuletzt gemeldete Stand wird persistent gehalten (Datenmodell: `notified_home`/`notified_away`), damit ein Bot-Neustart mitten im Spiel keine Tore doppelt oder gar nicht meldet.
+
 ---
 
 ## Hintergrund-Jobs (Spring `@Scheduled`)
@@ -117,6 +132,7 @@ Statt den Spielplan nur on-demand per Command anzuzeigen, hält der Bot in einem
 | `revealJob` | minütlich | Tipps anstehender Spiele offenlegen (F4) |
 | `evaluateJob` | minütlich | Beendete Spiele auswerten (F5) |
 | `boardRefresh` | nach jedem `syncMatches` (bzw. alle 15 Min) | Live-Board-Nachrichten editieren (F7); bei laufenden Spielen optional häufiger für Live-Stände |
+| `liveGoalPoll` | im Live-Fenster alle ~60s (konfigurierbar), sonst inaktiv | Scores laufender Spiele (`kickoff` … `kickoff + 2.5h`) abfragen, Tore via Goal-Detector erkennen und in den Announce-Channel posten (F8) |
 
 ---
 
@@ -154,3 +170,6 @@ Statt Embeds eine echte Grafik serverseitig rendern (Java2D/`BufferedImage` oder
 - **Gateway statt nur Cron:** Durch F7 (interaktive Komponenten) braucht der Bot eine dauerhafte Gateway-Verbindung, nicht nur `@Scheduled`-Jobs. Beim Deployment beachten: der Prozess muss durchlaufen, ein Neustart/Re-Connect darf Slash-Commands und getrackte `bot_messages` nicht verlieren.
 - **Embed-Limits:** Discord erlaubt max. 25 Felder bzw. 6000 Zeichen pro Embed und 10 Embeds pro Nachricht. Bei 104 Spielen niemals alles in eine Nachricht — F7-Slot-Aufteilung nach Tag/Spieltag ist Pflicht, nicht optional.
 - **Board-Recovery:** Manuell gelöschte oder von Discord verworfene Board-Nachrichten müssen erkannt (Edit schlägt mit 404 fehl) und neu gepostet werden; `bot_messages` entsprechend aktualisieren.
+- **F8 — VAR-/Korrekturfälle:** Ein aberkanntes Tor senkt den Stand wieder. Der Goal-Detector darf dann **keine** Benachrichtigung auslösen und muss den gemeldeten Stand (`notified_*`) konsistent nach unten korrigieren. Offen: stilles Zurücksetzen vs. kurze Korrektur-Notiz im Channel.
+- **F8 — API-Verzögerung / Lücken:** Fallen zwischen zwei Polls mehrere Tore (oder liefert die API verspätet/lückenhaft), muss die Score-Differenz als **mehrere Einzel-`GoalEvent`s** aufgelöst werden (je Tor ein Ping), nicht als ein Sammel-Update. Spielminute/Reihenfolge können dabei unpräzise sein; ggf. nur Stand statt Minute melden.
+- **F8 — Recovery nach Bot-Neustart mitten im Spiel:** Der zuletzt gemeldete Stand (`notified_*`) ist persistent, damit nach einem Neustart weder bereits gemeldete Tore erneut gepingt noch in der Downtime gefallene Tore verschluckt werden. Offen: ob in der Downtime gefallene Tore beim ersten Poll nachgemeldet werden (mehrere Pings auf einmal) oder nur der Stand stillschweigend nachgezogen wird.
