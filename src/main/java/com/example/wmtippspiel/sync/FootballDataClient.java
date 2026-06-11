@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 /**
  * Holt Spielplan & Ergebnisse von football-data.org (contracts/external-apis.md).
@@ -51,6 +52,11 @@ public class FootballDataClient {
                 }
             }
             return result;
+        } catch (WebClientResponseException e) {
+            // Den eigentlichen Fehlertext der API mitloggen (z. B. Plan-/Parameter-Hinweis).
+            log.warn("football-data.org Sync übersprungen: {} {} – Body: {}",
+                    e.getStatusCode().value(), e.getStatusText(), e.getResponseBodyAsString());
+            return List.of();
         } catch (Exception e) {
             log.warn("football-data.org Sync übersprungen: {}", e.getMessage());
             return List.of();
