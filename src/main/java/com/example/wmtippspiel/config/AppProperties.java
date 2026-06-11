@@ -10,7 +10,8 @@ public record AppProperties(
         FootballData footballData,
         Odds odds) {
 
-    public record Discord(String token, String guildId, String announceChannelId, String boardChannelId) {
+    public record Discord(String token, String guildId, String announceChannelId, String boardChannelId,
+                          String infoChannelId) {
     }
 
     public record FootballData(String baseUrl, String apiKey) {
