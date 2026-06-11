@@ -1,6 +1,12 @@
 spring:
   application:
     name: wm-tippspiel
+  # Mehrere @Scheduled-Jobs (Sync/Reveal/Eval/Board/Odds) sollen sich nicht
+  # gegenseitig blockieren – eigener Thread-Pool statt des Single-Thread-Defaults.
+  task:
+    scheduling:
+      pool:
+        size: 4
   # Kein Web-Server — der Bot lebt über die JDA-Gateway-Verbindung; WebClient ist nur HTTP-Client.
   main:
     web-application-type: none

@@ -74,9 +74,11 @@ public class BoardService {
         }
         TextChannel channel = jda.getTextChannelById(boardChannelId);
         if (channel == null) {
-            log.warn("Board-Channel {} nicht gefunden", boardChannelId);
+            log.warn("Board-Channel {} nicht gefunden – ist der Bot im Server, ist es ein Textkanal "
+                    + "(kein Ankündigungs-/Forum-Kanal) und hat er dort Leserechte?", boardChannelId);
             return;
         }
+        log.info("Board-Refresh läuft für Channel #{} ({})", channel.getName(), boardChannelId);
 
         LocalDate today = LocalDate.ofInstant(clock.instant(), displayZone);
         for (int offset = 0; offset <= DAYS_AHEAD; offset++) {
@@ -84,9 +86,11 @@ public class BoardService {
             Instant from = date.atStartOfDay(displayZone).toInstant();
             Instant to = date.plusDays(1).atStartOfDay(displayZone).toInstant();
             List<Match> dayMatches = matches.findBetween(from, to);
+            log.info("Board-Slot {}: {} Spiele", date, dayMatches.size());
             editOrPostEmbed(channel, "board:day:" + date, boardEmbed.buildDay(date, dayMatches));
         }
         ensureNav(channel);
+        log.info("Board-Refresh abgeschlossen ({} Tages-Slots)", DAYS_AHEAD + 1);
     }
 
     private void editOrPostEmbed(TextChannel channel, String key, MessageEmbed embed) {
