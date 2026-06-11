@@ -15,7 +15,10 @@ services:
       POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME:-wmtippspiel}
       POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-wmtippspiel}
     ports:
-      - "5432:5432"          # erlaubt lokalen Bot-Start gegen den DB-Container
+      # Nur an localhost gebunden – DB ist NICHT aus dem Internet erreichbar.
+      # Reicht für lokalen Bot-Start (mvn) gegen den Container; im Full-Stack
+      # läuft die Verbindung ohnehin übers Compose-Netz (Host "db").
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data   # Persistenz über Neustarts (Tipps/bot_messages)
     healthcheck:
