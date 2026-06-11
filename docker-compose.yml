@@ -1,0 +1,45 @@
+# Vollständiger Stack: PostgreSQL (mit persistentem Volume) + Bot.
+#
+#   cp .env.example .env   # Werte eintragen (mind. Discord-Token, API-Key)
+#   docker compose up -d --build         # alles
+#   docker compose up -d db              # nur die DB (Bot lokal aus IDE/mvn)
+#
+# DB-Zugangsdaten werden aus .env interpoliert (Default wmtippspiel/wmtippspiel,
+# falls nicht gesetzt). Der Bot erreicht die DB unter Host "db".
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: wmtippspiel
+      POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME:-wmtippspiel}
+      POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-wmtippspiel}
+    ports:
+      - "5432:5432"          # erlaubt lokalen Bot-Start gegen den DB-Container
+    volumes:
+      - pgdata:/var/lib/postgresql/data   # Persistenz über Neustarts (Tipps/bot_messages)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${SPRING_DATASOURCE_USERNAME:-wmtippspiel} -d wmtippspiel"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  bot:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    # Discord-/API-/Zeitzone-Variablen aus .env (optional, falls Bot via Compose laufen soll).
+    env_file:
+      - path: .env
+        required: false
+    # DB-Verbindung im Compose-Netz überschreibt evtl. localhost-Werte aus .env.
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/wmtippspiel
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-wmtippspiel}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-wmtippspiel}
+    restart: unless-stopped
+
+volumes:
+  pgdata:

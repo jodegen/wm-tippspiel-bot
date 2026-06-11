@@ -1,0 +1,24 @@
+# Build-Kontext schlank halten – das Image braucht nur pom.xml + src.
+.git
+.gitignore
+target
+.idea
+*.iml
+.vscode
+.settings
+.classpath
+.project
+.DS_Store
+Thumbs.db
+
+# Secrets / lokale Konfiguration niemals ins Image
+.env
+.env.*
+
+# Nicht baurelevante Projekt-/Tooling-Dateien
+.specify
+.claude
+specs
+*.md
+Dockerfile
+docker-compose.yml

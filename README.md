@@ -71,6 +71,31 @@ Ablauf beim Start: Liquibase migriert → JDA verbindet sich dauerhaft mit dem
 Gateway → Slash-Commands werden guild-scoped registriert → Board-Slots werden
 gepostet bzw. editiert.
 
+## Mit Docker starten (empfohlen)
+
+Vollständiger Stack (PostgreSQL mit persistentem Volume + Bot):
+
+```bash
+cp .env.example .env          # Werte eintragen (mind. DISCORD_TOKEN, FOOTBALL_DATA_API_KEY)
+docker compose up -d --build  # DB + Bot starten
+docker compose logs -f bot    # Logs verfolgen
+```
+
+Nur die Datenbank im Container (Bot lokal aus IDE/Maven):
+
+```bash
+docker compose up -d db
+mvn spring-boot:run           # nutzt jdbc:postgresql://localhost:5432/wmtippspiel
+```
+
+Hinweise:
+- Die DB-Daten liegen im Named Volume `pgdata` und überleben Neustarts (Tipps,
+  `bot_messages`, Reveal-/Eval-Stand bleiben erhalten).
+- DB-Zugangsdaten werden aus `.env` interpoliert (Default `wmtippspiel`/`wmtippspiel`).
+  Im Compose-Netz erreicht der Bot die DB unter Host `db`.
+- Tests laufen nicht im Image-Build (sie brauchen Docker/Testcontainers); dafür
+  `mvn verify` auf dem Host nutzen.
+
 ## Commands
 
 | Command | Zweck | Sichtbarkeit |
