@@ -5,9 +5,11 @@ import com.example.wmtippspiel.discord.commands.RanglisteCommand;
 import com.example.wmtippspiel.discord.commands.SpielplanCommand;
 import com.example.wmtippspiel.discord.commands.TippAutocomplete;
 import com.example.wmtippspiel.discord.commands.TippCommand;
+import com.example.wmtippspiel.discord.commands.TippenFlow;
 import com.example.wmtippspiel.discord.components.BoardFilterHandler;
 import com.example.wmtippspiel.discord.components.BoardNavigation;
 
+import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
@@ -16,15 +18,16 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.springframework.stereotype.Component;
 
 /**
- * Zentraler Gateway-Listener: routet Slash-Commands, Autocomplete- und
- * Component-Interaktionen an die jeweiligen Handler (ereignisgetrieben,
- * Verfassung Prinzip V / FR-028).
+ * Zentraler Gateway-Listener: routet Slash-Commands, Autocomplete-, Select- und
+ * Modal-Interaktionen an die jeweiligen Handler (ereignisgetrieben, Verfassung
+ * Prinzip V / FR-028).
  */
 @Component
 public class InteractionListener extends ListenerAdapter {
 
     private final TippCommand tippCommand;
     private final TippAutocomplete tippAutocomplete;
+    private final TippenFlow tippenFlow;
     private final RanglisteCommand ranglisteCommand;
     private final SpielplanCommand spielplanCommand;
     private final NaechstesCommand naechstesCommand;
@@ -32,12 +35,14 @@ public class InteractionListener extends ListenerAdapter {
 
     public InteractionListener(TippCommand tippCommand,
                                TippAutocomplete tippAutocomplete,
+                               TippenFlow tippenFlow,
                                RanglisteCommand ranglisteCommand,
                                SpielplanCommand spielplanCommand,
                                NaechstesCommand naechstesCommand,
                                BoardFilterHandler boardFilterHandler) {
         this.tippCommand = tippCommand;
         this.tippAutocomplete = tippAutocomplete;
+        this.tippenFlow = tippenFlow;
         this.ranglisteCommand = ranglisteCommand;
         this.spielplanCommand = spielplanCommand;
         this.naechstesCommand = naechstesCommand;
@@ -48,6 +53,7 @@ public class InteractionListener extends ListenerAdapter {
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
         switch (event.getName()) {
             case TippCommand.NAME -> tippCommand.handle(event);
+            case TippenFlow.COMMAND -> tippenFlow.openMenu(event);
             case RanglisteCommand.NAME -> ranglisteCommand.handle(event);
             case SpielplanCommand.NAME -> spielplanCommand.handle(event);
             case NaechstesCommand.NAME -> naechstesCommand.handle(event);
@@ -65,8 +71,18 @@ public class InteractionListener extends ListenerAdapter {
 
     @Override
     public void onStringSelectInteraction(StringSelectInteractionEvent event) {
-        if (BoardNavigation.FILTER_ID.equals(event.getComponentId())) {
+        String id = event.getComponentId();
+        if (TippenFlow.SELECT_ID.equals(id)) {
+            tippenFlow.openModal(event);
+        } else if (BoardNavigation.FILTER_ID.equals(id)) {
             boardFilterHandler.handle(event);
+        }
+    }
+
+    @Override
+    public void onModalInteraction(ModalInteractionEvent event) {
+        if (event.getModalId().startsWith(TippenFlow.MODAL_PREFIX)) {
+            tippenFlow.submit(event);
         }
     }
 }

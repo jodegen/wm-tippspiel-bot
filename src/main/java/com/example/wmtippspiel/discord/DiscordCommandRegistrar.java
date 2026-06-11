@@ -5,6 +5,7 @@ import com.example.wmtippspiel.discord.commands.NaechstesCommand;
 import com.example.wmtippspiel.discord.commands.RanglisteCommand;
 import com.example.wmtippspiel.discord.commands.SpielplanCommand;
 import com.example.wmtippspiel.discord.commands.TippCommand;
+import com.example.wmtippspiel.discord.commands.TippenFlow;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
@@ -51,6 +52,7 @@ public class DiscordCommandRegistrar {
                                 new OptionData(OptionType.STRING, "spiel", "Spiel auswählen", true, true),
                                 new OptionData(OptionType.INTEGER, "heim", "Tore Heim", true).setMinValue(0),
                                 new OptionData(OptionType.INTEGER, "gast", "Tore Gast", true).setMinValue(0)),
+                Commands.slash(TippenFlow.COMMAND, "Geführt tippen: Spiel auswählen und Ergebnis eingeben"),
                 Commands.slash(RanglisteCommand.NAME, "Aktuelle Rangliste anzeigen"),
                 Commands.slash(SpielplanCommand.NAME, "Die nächsten Spiele anzeigen")
                         .addOptions(new OptionData(OptionType.INTEGER, SpielplanCommand.OPTION_ANZAHL,

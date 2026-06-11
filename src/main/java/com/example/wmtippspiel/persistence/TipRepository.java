@@ -22,6 +22,14 @@ public class TipRepository {
         this.jdbc = jdbc;
     }
 
+    public java.util.Optional<Tip> findByUserAndMatch(String userId, long matchId) {
+        return jdbc.sql("SELECT * FROM tips WHERE user_id = :userId AND match_id = :matchId")
+                .param("userId", userId)
+                .param("matchId", matchId)
+                .query(TipRepository::map)
+                .optional();
+    }
+
     public List<Tip> findByMatch(long matchId) {
         return jdbc.sql("SELECT * FROM tips WHERE match_id = :matchId ORDER BY username ASC")
                 .param("matchId", matchId)
