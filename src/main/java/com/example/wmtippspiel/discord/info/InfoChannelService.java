@@ -4,6 +4,7 @@ import java.time.Clock;
 import java.util.Optional;
 
 import com.example.wmtippspiel.config.AppProperties;
+import com.example.wmtippspiel.discord.notify.NotifyService;
 import com.example.wmtippspiel.discord.render.InfoEmbed;
 import com.example.wmtippspiel.domain.model.BotMessage;
 import com.example.wmtippspiel.persistence.BotMessageRepository;
@@ -12,6 +13,8 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.exceptions.ErrorResponseException;
+import net.dv8tion.jda.api.interactions.components.ActionRow;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.requests.ErrorResponse;
 
 import org.slf4j.Logger;
@@ -67,24 +70,28 @@ public class InfoChannelService {
     }
 
     private void publish(TextChannel channel, MessageEmbed embed) {
+        ActionRow buttons = ActionRow.of(
+                Button.secondary(NotifyService.TOGGLE_BUTTON, "🔔 WM-Notify an/aus"));
         Optional<BotMessage> existing = botMessages.findByKey(INFO_KEY);
         if (existing.isPresent()) {
-            channel.editMessageEmbedsById(existing.get().messageId(), embed).queue(
-                    ok -> log.info("Info-Embed aktualisiert"),
-                    err -> {
-                        if (isUnknownMessage(err)) {
-                            post(channel, embed);
-                        } else {
-                            log.warn("Info-Embed-Edit fehlgeschlagen: {}", err.getMessage());
-                        }
-                    });
+            channel.editMessageEmbedsById(existing.get().messageId(), embed)
+                    .setComponents(buttons)
+                    .queue(
+                            ok -> log.info("Info-Embed aktualisiert"),
+                            err -> {
+                                if (isUnknownMessage(err)) {
+                                    post(channel, embed, buttons);
+                                } else {
+                                    log.warn("Info-Embed-Edit fehlgeschlagen: {}", err.getMessage());
+                                }
+                            });
         } else {
-            post(channel, embed);
+            post(channel, embed, buttons);
         }
     }
 
-    private void post(TextChannel channel, MessageEmbed embed) {
-        channel.sendMessageEmbeds(embed).queue(
+    private void post(TextChannel channel, MessageEmbed embed, ActionRow buttons) {
+        channel.sendMessageEmbeds(embed).setComponents(buttons).queue(
                 msg -> {
                     botMessages.upsert(new BotMessage(INFO_KEY, channel.getId(), msg.getId(), clock.instant()));
                     log.info("Info-Embed gepostet");

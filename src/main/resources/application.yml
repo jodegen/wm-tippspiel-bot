@@ -27,6 +27,9 @@ app:
     board-channel-id: ${DISCORD_BOARD_CHANNEL_ID:}
     info-channel-id: ${DISCORD_INFO_CHANNEL_ID:}
     tip-channel-id: ${DISCORD_TIP_CHANNEL_ID:}
+    notify-role-id: ${DISCORD_NOTIFY_ROLE_ID:}
+  reminder:
+    lead-minutes: ${REMINDER_LEAD_MINUTES:60}
   football-data:
     base-url: ${FOOTBALL_DATA_BASE_URL:https://api.football-data.org/v4}
     api-key: ${FOOTBALL_DATA_API_KEY:}

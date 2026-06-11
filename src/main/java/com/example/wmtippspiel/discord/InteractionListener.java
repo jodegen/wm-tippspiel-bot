@@ -8,6 +8,7 @@ import com.example.wmtippspiel.discord.commands.TippCommand;
 import com.example.wmtippspiel.discord.commands.TippenFlow;
 import com.example.wmtippspiel.discord.components.BoardFilterHandler;
 import com.example.wmtippspiel.discord.components.BoardNavigation;
+import com.example.wmtippspiel.discord.notify.NotifyService;
 
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
@@ -33,6 +34,7 @@ public class InteractionListener extends ListenerAdapter {
     private final SpielplanCommand spielplanCommand;
     private final NaechstesCommand naechstesCommand;
     private final BoardFilterHandler boardFilterHandler;
+    private final NotifyService notifyService;
 
     public InteractionListener(TippCommand tippCommand,
                                TippAutocomplete tippAutocomplete,
@@ -40,7 +42,8 @@ public class InteractionListener extends ListenerAdapter {
                                RanglisteCommand ranglisteCommand,
                                SpielplanCommand spielplanCommand,
                                NaechstesCommand naechstesCommand,
-                               BoardFilterHandler boardFilterHandler) {
+                               BoardFilterHandler boardFilterHandler,
+                               NotifyService notifyService) {
         this.tippCommand = tippCommand;
         this.tippAutocomplete = tippAutocomplete;
         this.tippenFlow = tippenFlow;
@@ -48,6 +51,7 @@ public class InteractionListener extends ListenerAdapter {
         this.spielplanCommand = spielplanCommand;
         this.naechstesCommand = naechstesCommand;
         this.boardFilterHandler = boardFilterHandler;
+        this.notifyService = notifyService;
     }
 
     @Override
@@ -82,8 +86,10 @@ public class InteractionListener extends ListenerAdapter {
 
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
-        if (TippenFlow.START_BUTTON.equals(event.getComponentId())) {
-            tippenFlow.openMenu(event);
+        switch (event.getComponentId()) {
+            case TippenFlow.START_BUTTON -> tippenFlow.openMenu(event);
+            case NotifyService.TOGGLE_BUTTON -> notifyService.toggle(event);
+            default -> { /* unbekannter Button – ignorieren */ }
         }
     }
 

@@ -5,3 +5,7 @@ databaseChangeLog:
       file: db/changelog/changesets/002-create-tips.sql
   - include:
       file: db/changelog/changesets/003-create-bot-messages.sql
+  - include:
+      file: db/changelog/changesets/004-create-notify-subscribers.sql
+  - include:
+      file: db/changelog/changesets/005-create-reminder-log.sql
