@@ -69,6 +69,7 @@ public class BoardService {
     /** Aktualisiert alle Tages-Slots und stellt die Navigationskomponente sicher. */
     public void refresh() {
         if (boardChannelId == null || boardChannelId.isBlank()) {
+            log.warn("Kein Board-Channel konfiguriert (DISCORD_BOARD_CHANNEL_ID) – Board wird nicht aktualisiert");
             return;
         }
         TextChannel channel = jda.getTextChannelById(boardChannelId);
