@@ -22,6 +22,9 @@ public class WebClientConfig {
     private static final String FOOTBALL_DATA = "footballDataWebClient";
     private static final String ODDS = "oddsWebClient";
 
+    // Große JSON-Antworten (104 Spiele bzw. alle Quoten) sprengen das 256-KB-Default.
+    private static final int MAX_IN_MEMORY_BYTES = 16 * 1024 * 1024;
+
     private HttpClient httpClient() {
         return HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10_000)
@@ -35,6 +38,7 @@ public class WebClientConfig {
                 .baseUrl(properties.footballData().baseUrl())
                 .defaultHeader("X-Auth-Token", safe(properties.footballData().apiKey()))
                 .clientConnector(new ReactorClientHttpConnector(httpClient()))
+                .codecs(c -> c.defaultCodecs().maxInMemorySize(MAX_IN_MEMORY_BYTES))
                 .build();
     }
 
@@ -43,6 +47,7 @@ public class WebClientConfig {
         return WebClient.builder()
                 .baseUrl(properties.odds().baseUrl())
                 .clientConnector(new ReactorClientHttpConnector(httpClient()))
+                .codecs(c -> c.defaultCodecs().maxInMemorySize(MAX_IN_MEMORY_BYTES))
                 .build();
     }
 

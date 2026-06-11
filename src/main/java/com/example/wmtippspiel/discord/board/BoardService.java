@@ -108,8 +108,10 @@ public class BoardService {
     }
 
     private void postEmbed(TextChannel channel, String key, MessageEmbed embed) {
-        channel.sendMessageEmbeds(embed).queue(msg ->
-                botMessages.upsert(new BotMessage(key, channel.getId(), msg.getId(), clock.instant())));
+        channel.sendMessageEmbeds(embed).queue(
+                msg -> botMessages.upsert(new BotMessage(key, channel.getId(), msg.getId(), clock.instant())),
+                err -> log.warn("Board-Post für {} fehlgeschlagen (Rechte im Channel? View/Send/Embed Links): {}",
+                        key, err.getMessage()));
     }
 
     private void ensureNav(TextChannel channel) {
@@ -118,8 +120,10 @@ public class BoardService {
         }
         channel.sendMessageEmbeds(boardEmbed.buildFiltered("🔎 Filter", List.of()))
                 .setComponents(navigation.actionRow())
-                .queue(msg ->
-                        botMessages.upsert(new BotMessage(NAV_KEY, channel.getId(), msg.getId(), clock.instant())));
+                .queue(
+                        msg -> botMessages.upsert(new BotMessage(NAV_KEY, channel.getId(), msg.getId(), clock.instant())),
+                        err -> log.warn("Board-Navigation-Post fehlgeschlagen (Rechte im Channel?): {}",
+                                err.getMessage()));
     }
 
     private static boolean isUnknownMessage(Throwable err) {
