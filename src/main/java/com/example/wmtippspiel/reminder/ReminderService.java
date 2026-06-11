@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 import com.example.wmtippspiel.domain.model.Match;
 import com.example.wmtippspiel.domain.model.Tip;
 import com.example.wmtippspiel.persistence.MatchRepository;
-import com.example.wmtippspiel.persistence.NotifySubscriberRepository;
 import com.example.wmtippspiel.persistence.ReminderLogRepository;
 import com.example.wmtippspiel.persistence.TipRepository;
 
@@ -31,7 +30,7 @@ public class ReminderService {
 
     private final MatchRepository matches;
     private final TipRepository tips;
-    private final NotifySubscriberRepository subscribers;
+    private final NotifyAudience audience;
     private final ReminderLogRepository reminderLog;
     private final ReminderPublisher publisher;
     private final Clock clock;
@@ -39,14 +38,14 @@ public class ReminderService {
 
     public ReminderService(MatchRepository matches,
                            TipRepository tips,
-                           NotifySubscriberRepository subscribers,
+                           NotifyAudience audience,
                            ReminderLogRepository reminderLog,
                            ReminderPublisher publisher,
                            Clock clock,
                            @Value("${app.reminder.lead-minutes:60}") long leadMinutes) {
         this.matches = matches;
         this.tips = tips;
-        this.subscribers = subscribers;
+        this.audience = audience;
         this.reminderLog = reminderLog;
         this.publisher = publisher;
         this.clock = clock;
@@ -57,7 +56,7 @@ public class ReminderService {
     public int remind() {
         Instant now = clock.instant();
         Instant until = now.plus(Duration.ofMinutes(leadMinutes));
-        List<String> allSubscribers = subscribers.findAllUserIds();
+        List<String> allSubscribers = audience.roleMemberUserIds();
         int reminded = 0;
 
         for (Match match : matches.findBetween(now, until)) {

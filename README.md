@@ -71,6 +71,18 @@ Ablauf beim Start: Liquibase migriert → JDA verbindet sich dauerhaft mit dem
 Gateway → Slash-Commands werden guild-scoped registriert → Board-Slots werden
 gepostet bzw. editiert.
 
+## WM-Notify (Rolle)
+
+Benachrichtigungen laufen ausschließlich über die WM-Notify-Rolle
+(`DISCORD_NOTIFY_ROLE_ID`): Der Button im Info-Channel vergibt/entzieht sie;
+Reveal, Auswertung und der Anpfiff-Hinweis pingen die Rolle, und die
+Tipp-Erinnerung pingt gezielt nur Rollenmitglieder ohne Tipp. Voraussetzungen:
+
+- Bot-Recht **Manage Roles**; die höchste Bot-Rolle muss **über** der Notify-Rolle stehen.
+- Für Role-Pings: Rolle **erwähnbar** schalten **oder** dem Bot „Mention All Roles" geben.
+- **Server Members Intent** (privileged) im Discord Developer Portal **aktivieren** —
+  sonst startet der Bot nicht (er braucht die Rollenmitglieder für die gezielte Erinnerung).
+
 ## Mit Docker starten (empfohlen)
 
 Vollständiger Stack (PostgreSQL mit persistentem Volume + Bot):

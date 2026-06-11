@@ -17,7 +17,6 @@ import com.example.wmtippspiel.domain.model.MatchStatus;
 import com.example.wmtippspiel.domain.model.Stage;
 import com.example.wmtippspiel.domain.model.Tip;
 import com.example.wmtippspiel.persistence.MatchRepository;
-import com.example.wmtippspiel.persistence.NotifySubscriberRepository;
 import com.example.wmtippspiel.persistence.ReminderLogRepository;
 import com.example.wmtippspiel.persistence.TipRepository;
 
@@ -34,7 +33,7 @@ class ReminderServiceTest {
 
     private MatchRepository matches;
     private TipRepository tips;
-    private NotifySubscriberRepository subscribers;
+    private NotifyAudience audience;
     private ReminderLogRepository reminderLog;
     private ReminderPublisher publisher;
     private ReminderService service;
@@ -43,11 +42,11 @@ class ReminderServiceTest {
     void setUp() {
         matches = Mockito.mock(MatchRepository.class);
         tips = Mockito.mock(TipRepository.class);
-        subscribers = Mockito.mock(NotifySubscriberRepository.class);
+        audience = Mockito.mock(NotifyAudience.class);
         reminderLog = Mockito.mock(ReminderLogRepository.class);
         publisher = Mockito.mock(ReminderPublisher.class);
         Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
-        service = new ReminderService(matches, tips, subscribers, reminderLog, publisher, clock, 60);
+        service = new ReminderService(matches, tips, audience, reminderLog, publisher, clock, 60);
     }
 
     @Test
@@ -56,7 +55,7 @@ class ReminderServiceTest {
         Match soon = match(1L, NOW.plusSeconds(1800)); // in 30 Min → im 60-Min-Fenster
         when(matches.findBetween(eq(NOW), eq(NOW.plusSeconds(3600)))).thenReturn(List.of(soon));
         when(reminderLog.wasReminded(1L)).thenReturn(false);
-        when(subscribers.findAllUserIds()).thenReturn(List.of("u1", "u2", "u3"));
+        when(audience.roleMemberUserIds()).thenReturn(List.of("u1", "u2", "u3"));
         when(tips.findByMatch(1L)).thenReturn(List.of(tip("u1", 1L))); // u1 hat getippt
 
         int reminded = service.remind();
@@ -87,7 +86,7 @@ class ReminderServiceTest {
         Match soon = match(1L, NOW.plusSeconds(1800));
         when(matches.findBetween(eq(NOW), eq(NOW.plusSeconds(3600)))).thenReturn(List.of(soon));
         when(reminderLog.wasReminded(1L)).thenReturn(false);
-        when(subscribers.findAllUserIds()).thenReturn(List.of("u1"));
+        when(audience.roleMemberUserIds()).thenReturn(List.of("u1"));
         when(tips.findByMatch(1L)).thenReturn(List.of(tip("u1", 1L)));
 
         assertThat(service.remind()).isZero();
