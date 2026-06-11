@@ -10,8 +10,8 @@ import com.example.wmtippspiel.domain.model.Tip;
 import com.example.wmtippspiel.persistence.MatchRepository;
 
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
-import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
+import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
@@ -30,6 +30,7 @@ import org.springframework.stereotype.Component;
 public class TippenFlow {
 
     public static final String COMMAND = "tippen";
+    public static final String START_BUTTON = "tipp:start";
     public static final String SELECT_ID = "tipp:select";
     public static final String MODAL_PREFIX = "tipp:modal:";
     private static final int MAX_OPTIONS = 25;
@@ -46,8 +47,8 @@ public class TippenFlow {
         this.clock = clock;
     }
 
-    /** Schritt 1: Dropdown der tippbaren Spiele (ephemeral). */
-    public void openMenu(SlashCommandInteractionEvent event) {
+    /** Schritt 1: Dropdown der tippbaren Spiele (ephemeral) – von /tippen oder vom Button aus. */
+    public void openMenu(IReplyCallback event) {
         List<Match> tippable = matches.findTippable(clock.instant(), MAX_OPTIONS);
         if (tippable.isEmpty()) {
             event.reply("Aktuell sind keine Spiele tippbar.").setEphemeral(true).queue();

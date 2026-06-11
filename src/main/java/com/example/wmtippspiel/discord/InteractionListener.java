@@ -12,6 +12,7 @@ import com.example.wmtippspiel.discord.components.BoardNavigation;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
@@ -76,6 +77,13 @@ public class InteractionListener extends ListenerAdapter {
             tippenFlow.openModal(event);
         } else if (BoardNavigation.FILTER_ID.equals(id)) {
             boardFilterHandler.handle(event);
+        }
+    }
+
+    @Override
+    public void onButtonInteraction(ButtonInteractionEvent event) {
+        if (TippenFlow.START_BUTTON.equals(event.getComponentId())) {
+            tippenFlow.openMenu(event);
         }
     }
 

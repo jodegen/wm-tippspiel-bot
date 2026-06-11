@@ -26,6 +26,7 @@ app:
     announce-channel-id: ${DISCORD_ANNOUNCE_CHANNEL_ID:}
     board-channel-id: ${DISCORD_BOARD_CHANNEL_ID:}
     info-channel-id: ${DISCORD_INFO_CHANNEL_ID:}
+    tip-channel-id: ${DISCORD_TIP_CHANNEL_ID:}
   football-data:
     base-url: ${FOOTBALL_DATA_BASE_URL:https://api.football-data.org/v4}
     api-key: ${FOOTBALL_DATA_API_KEY:}

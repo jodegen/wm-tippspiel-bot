@@ -32,6 +32,7 @@ public class InfoEmbed {
         AppProperties.Discord d = properties.discord();
         String announce = mention(d.announceChannelId(), "im Announce-Channel");
         String board = mention(d.boardChannelId(), "das Live-Board");
+        String tip = mention(d.tipChannelId(), null);
 
         EmbedBuilder embed = new EmbedBuilder()
                 .setColor(new Color(0xF1C40F))
@@ -42,9 +43,11 @@ public class InfoEmbed {
                         Alles Wichtige auf einen Blick — viel Erfolg! 🍀
                         """ + "\n" + DIVIDER);
 
+        String tippHint = tip != null
+                ? "Am einfachsten in " + tip + ": auf **\"⚽ Jetzt tippen\"** klicken, Spiel wählen, Ergebnis eingeben.\n"
+                : "Nutze **`/tippen`** — Spiel auswählen und Ergebnis ins Popup eintragen (oder **`/tipp`** direkt).\n";
         embed.addField("🎯  Tipp abgeben",
-                "Nutze **`/tipp`** — wähle ein Spiel (Autocomplete) und gib dein Ergebnis ein.\n"
-                        + "Deine Abgabe ist **nur für dich sichtbar** und bis zum **Anpfiff** beliebig änderbar.",
+                tippHint + "Deine Abgabe ist **nur für dich sichtbar** und bis zum **Anpfiff** beliebig änderbar.",
                 false);
 
         embed.addField("📊  Punkte",
