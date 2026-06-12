@@ -18,7 +18,7 @@ services:
       # Nur an localhost gebunden – DB ist NICHT aus dem Internet erreichbar.
       # Reicht für lokalen Bot-Start (mvn) gegen den Container; im Full-Stack
       # läuft die Verbindung ohnehin übers Compose-Netz (Host "db").
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data   # Persistenz über Neustarts (Tipps/bot_messages)
     healthcheck:
