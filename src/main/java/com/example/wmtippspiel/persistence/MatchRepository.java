@@ -79,6 +79,13 @@ public class MatchRepository {
                 .list();
     }
 
+    /** Aktuell laufende Spiele (Status IN_PLAY), nach Anpfiff sortiert (F9 — LIVE-Bestimmung). */
+    public List<Match> findInPlay() {
+        return jdbc.sql("SELECT * FROM matches WHERE status = 'IN_PLAY' ORDER BY kickoff ASC")
+                .query(MatchRepository::map)
+                .list();
+    }
+
     /** Alle Spiele in einem Zeitfenster (für die Tages-Slots des Boards), sortiert. */
     public List<Match> findBetween(Instant fromInclusive, Instant toExclusive) {
         return jdbc.sql("""
@@ -136,6 +143,18 @@ public class MatchRepository {
     public void updateNotifiedScore(long matchId, int home, int away) {
         jdbc.sql("UPDATE matches SET notified_home = :h, notified_away = :a WHERE id = :id")
                 .param("h", home).param("a", away).param("id", matchId)
+                .update();
+    }
+
+    /**
+     * Hält den Live-Stand+Status während eines Spiels frisch in {@code matches} (F9),
+     * damit die Presence den aktuellen Stand aus der DB lesen kann. Nutzt
+     * ausschließlich vorhandene Spalten (kein Schema-Eingriff) und berührt
+     * {@code revealed}/{@code evaluated}/{@code channel}/{@code odds_*} nicht.
+     */
+    public void updateLiveScore(long id, Integer home, Integer away, MatchStatus status) {
+        jdbc.sql("UPDATE matches SET home_score = :h, away_score = :a, status = :status WHERE id = :id")
+                .param("h", home).param("a", away).param("status", status.name()).param("id", id)
                 .update();
     }
 

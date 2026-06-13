@@ -125,6 +125,22 @@ Statt den Spielplan nur on-demand per Command anzuzeigen, hält der Bot in einem
 
 **Wichtige Voraussetzung:** Der zuletzt gemeldete Stand wird persistent gehalten (Datenmodell: `notified_home`/`notified_away`), damit ein Bot-Neustart mitten im Spiel keine Tore doppelt oder gar nicht meldet.
 
+### F9 — Dynamische Bot-Presence
+Der Bot spiegelt über seine Discord-Presence (Activity-Typ **watching**, „Sieht sich … an") **zustandsgesteuert** (NICHT zeitbasiert rotierend) den aktuellen WM-Kontext wider. Es gewinnt jederzeit der höchstpriorisierte zutreffende Zustand.
+
+> Detailspezifikation: `specs/004-dynamic-bot-presence/spec.md` (Feature 004).
+
+**Drei priorisierte Zustände (LIVE > UPCOMING > IDLE):**
+- **LIVE** — sobald mindestens ein Spiel läuft, zeigt die Presence den Live-Stand, z. B. „⚽ LIVE: GER 2:1 FRA". **Event-getrieben** über den bestehenden F8-Goal-Detector aktualisiert — **kein eigener Timer/Poller** in F9.
+- **UPCOMING** — wenn kein Spiel läuft, aber ein künftiges existiert, zeigt die Presence das nächste Spiel, z. B. „👀 Nächstes: GER vs FRA". Aktualisierung beim `boardRefresh`, jedoch **höchstens stündlich**.
+- **IDLE** — statischer Fallback, wenn weder ein Spiel läuft noch eines ansteht, z. B. „🏆 WM 2026 /tipp".
+
+**Wichtige Regeln:**
+- Die Activity wird **nur gesetzt, wenn sich der Anzeigetext tatsächlich geändert hat** (kein redundantes Update).
+- **Throttling:** Discord erlaubt nur **5 Presence-Änderungen pro 20 Sekunden** (sonst 60s-Backoff). Eine Drossel muss das **garantiert** verhindern; überzählige Updates werden verzögert/zusammengefasst und es wird jeweils der aktuellste Text gesendet.
+- Nur **Standard-Unicode-Emojis** (keine custom Discord-Emojis).
+- Nach Start/Reconnect wird die Presence aus dem aktuellen Zustand neu gesetzt.
+
 ---
 
 ## Hintergrund-Jobs (Spring `@Scheduled`)

@@ -69,6 +69,30 @@ class ScoreDiffGoalEventSourceTest {
     }
 
     @Test
+    @DisplayName("F9: Stand+Status eines Spiels im Zeitfenster wird in matches persistiert (auch ohne Tor)")
+    void inWindowPersistsLiveScore() {
+        Match live = match(1L, NOW.minusSeconds(1800), MatchStatus.IN_PLAY, 2, 1);
+        when(client.fetchMatches()).thenReturn(List.of(live));
+        when(matches.getNotifiedScore(1L)).thenReturn(Optional.of(new NotifiedScore(2, 1))); // unverändert
+
+        source.fetchEvents();
+
+        verify(matches).updateLiveScore(1L, 2, 1, MatchStatus.IN_PLAY);
+    }
+
+    @Test
+    @DisplayName("F9: FINISHED im Zeitfenster wird persistiert, aber nicht der Tor-Erkennung zugeführt")
+    void finishedInWindowPersistsStatusButSkipsGoalDetection() {
+        Match finished = match(4L, NOW.minusSeconds(3600), MatchStatus.FINISHED, 3, 0); // Anpfiff vor 1 h
+        when(client.fetchMatches()).thenReturn(List.of(finished));
+
+        assertThat(source.fetchEvents()).isEmpty();
+
+        verify(matches).updateLiveScore(4L, 3, 0, MatchStatus.FINISHED);
+        verify(matches, never()).getNotifiedScore(anyLong()); // FINISHED von der Goal-Guard übersprungen
+    }
+
+    @Test
     @DisplayName("Spiele außerhalb des Live-Fensters werden ignoriert (keine Abfrage des gemeldeten Standes)")
     void outOfWindowIgnored() {
         Match future = match(2L, NOW.plusSeconds(3600), MatchStatus.SCHEDULED, null, null); // erst in 1 h

@@ -244,6 +244,30 @@ class PersistenceIntegrationTest {
         assertThat(matches.getNotifiedScore(999L)).isEmpty();
     }
 
+    @Test
+    @DisplayName("F9: updateLiveScore hält Stand+Status frisch; findInPlay liefert nur laufende Spiele")
+    void liveScoreAndInPlayRoundTrip() {
+        matches.upsert(scheduled(80L)); // SCHEDULED
+        assertThat(matches.findInPlay()).isEmpty();
+
+        matches.updateLiveScore(80L, 1, 0, MatchStatus.IN_PLAY);
+        List<Match> inPlay = matches.findInPlay();
+        assertThat(inPlay).hasSize(1);
+        Match live = inPlay.get(0);
+        assertThat(live.id()).isEqualTo(80L);
+        assertThat(live.homeScore()).isEqualTo(1);
+        assertThat(live.awayScore()).isEqualTo(0);
+        assertThat(live.status()).isEqualTo(MatchStatus.IN_PLAY);
+
+        // IN_PLAY → FINISHED: fällt aus findInPlay heraus, Stand bleibt erhalten.
+        matches.updateLiveScore(80L, 2, 1, MatchStatus.FINISHED);
+        assertThat(matches.findInPlay()).isEmpty();
+        assertThat(matches.findById(80L).orElseThrow().homeScore()).isEqualTo(2);
+
+        // Schutzfelder unberührt.
+        assertThat(matches.findById(80L).orElseThrow().revealed()).isFalse();
+    }
+
     private static Match scheduled(long id) {
         return new Match(id, "Team A", "Team B", KICKOFF, Stage.GROUP_STAGE, "A", null,
                 null, null, null, null, null, MatchStatus.SCHEDULED, false, false);
