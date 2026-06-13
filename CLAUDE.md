@@ -1,15 +1,20 @@
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/002-live-goal-notifications/plan.md` (aktuelles Feature F8).
+`specs/003-consolidated-board/plan.md` (aktuelles Feature F7-Redesign).
+Vorheriges Feature: `specs/002-live-goal-notifications/plan.md` (F8).
 Basis-Feature/Architektur: `specs/001-wm-tippspiel-bot/plan.md`.
 
-Aktuelles Feature: **002-live-goal-notifications** (F8 — Live-Tor-Benachrichtigungen).
-Additive Erweiterung: `GoalEventSource` (austauschbar; Default Score-Diff-Polling
-über bestehenden `FootballDataClient`), reiner `GoalDetector` (Idempotenz, VAR,
-Recovery via persistiertem `notified_*`), `GoalNotifier` über bestehende
-`AnnounceChannel`-Logik, `@Scheduled liveGoalPoll` nur im Live-Fenster
-(kickoff…+2,5h). Neue Spalten `notified_home/away` via Liquibase-Changeset 008.
+Aktuelles Feature: **003-consolidated-board** (F7-Redesign — konsolidiertes Board).
+Modifikation der bestehenden F7-Implementierung: `bot_messages` auf einen Slot
+`board:main` reduziert (Alt-Slots `board:day:*`/`board:nav` via Liquibase-Changeset
+009 migriert/entfernt). Ein konsolidiertes Embed mit den nächsten 12 anstehenden
+Spielen (`MatchRepository.findUpcoming(now, 12)`) als Liste in der description,
+defensiv tronkiert (<4096 desc / <6000 gesamt). Start-Cleanup löscht verwaiste
+eigene Bot-Nachrichten (Author = Self, nicht `board:main`) in den letzten 100
+Nachrichten. Gemeinsamer Styling-Helper `EmbedStyle` für Info- & Board-Embed
+(Akzentfarbe, Author-Header, Footer+Timestamp). Filter-Komponente unverändert,
+hängt an `board:main`. `boardRefresh`-Job-Trigger unverändert.
 
 Active feature: **001-wm-tippspiel-bot** (WM 2026 Tippspiel Discord-Bot).
 Stack: Java 21, Spring Boot 3.x, JDA (dauerhafte Gateway-Verbindung), PostgreSQL
