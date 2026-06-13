@@ -1,20 +1,25 @@
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/003-consolidated-board/plan.md` (aktuelles Feature F7-Redesign).
-Vorheriges Feature: `specs/002-live-goal-notifications/plan.md` (F8).
+`specs/004-dynamic-bot-presence/plan.md` (aktuelles Feature F9 — Dynamische Bot-Presence).
+Vorheriges Feature: `specs/003-consolidated-board/plan.md` (F7-Redesign).
+Weiteres: `specs/002-live-goal-notifications/plan.md` (F8).
 Basis-Feature/Architektur: `specs/001-wm-tippspiel-bot/plan.md`.
 
-Aktuelles Feature: **003-consolidated-board** (F7-Redesign — konsolidiertes Board).
-Modifikation der bestehenden F7-Implementierung: `bot_messages` auf einen Slot
-`board:main` reduziert (Alt-Slots `board:day:*`/`board:nav` via Liquibase-Changeset
-009 migriert/entfernt). Ein konsolidiertes Embed mit den nächsten 12 anstehenden
-Spielen (`MatchRepository.findUpcoming(now, 12)`) als Liste in der description,
-defensiv tronkiert (<4096 desc / <6000 gesamt). Start-Cleanup löscht verwaiste
-eigene Bot-Nachrichten (Author = Self, nicht `board:main`) in den letzten 100
-Nachrichten. Gemeinsamer Styling-Helper `EmbedStyle` für Info- & Board-Embed
-(Akzentfarbe, Author-Header, Footer+Timestamp). Filter-Komponente unverändert,
-hängt an `board:main`. `boardRefresh`-Job-Trigger unverändert.
+Aktuelles Feature: **004-dynamic-bot-presence** (F9 — Dynamische Bot-Presence).
+Neuer `PresenceManager` (`presence`-Paket) kapselt zustandsgesteuerte JDA-Presence
+(Activity-Typ `watching`): priorisierte Zustände **LIVE > UPCOMING > IDLE**,
+Auswahl bei mehreren Live-Spielen = zuletzt verändertes Spiel (Tie-Breaker Anpfiff).
+Reine Helfer `PresenceStateResolver` (Priorität/Textbau) und `PresenceThrottle`
+(Mindestabstand `${app.presence.min-update-interval-ms:5000}` + Coalescing, garantiert
+≤5/20 s), `TeamCodeResolver` (Ressource `presence/team-codes.properties`, Fallback
+Klartext). `setActivity` nur bei tatsächlicher Textänderung. Verdrahtung rein additiv:
+`LiveGoalPollJob` + `BoardRefreshJob` rufen zusätzlich `recompute()`; JDA
+`onReady`/`onReconnected`/`onSessionRecreate` für Initial-/Reconnect-Setzen.
+`ScoreDiffGoalEventSource` persistiert frischen Live-Stand+Status in `matches`
+(vorhandene Spalten); neue `MatchRepository`-Methoden `findInPlay()` (read) +
+`updateLiveScore()` (write). **Keine Schema-Änderung, kein Liquibase-Changeset,
+keine neuen Abhängigkeiten.**
 
 Active feature: **001-wm-tippspiel-bot** (WM 2026 Tippspiel Discord-Bot).
 Stack: Java 21, Spring Boot 3.x, JDA (dauerhafte Gateway-Verbindung), PostgreSQL

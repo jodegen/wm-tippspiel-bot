@@ -49,6 +49,12 @@ public class ScoreDiffGoalEventSource implements GoalEventSource {
         Instant now = clock.instant();
         List<GoalEvent> events = new ArrayList<>();
         for (Match fresh : client.fetchMatches()) {
+            // F9: frischen Stand+Status in matches halten, BEVOR die Goal-Guard
+            // greift — erfasst auch den IN_PLAY→FINISHED-Übergang im Live-Takt,
+            // sodass die Presence Eintritt/Austritt zeitnah aus der DB lesen kann.
+            if (inTimeWindow(fresh, now) && fresh.homeScore() != null && fresh.awayScore() != null) {
+                matches.updateLiveScore(fresh.id(), fresh.homeScore(), fresh.awayScore(), fresh.status());
+            }
             if (!inLiveWindow(fresh, now) || fresh.homeScore() == null || fresh.awayScore() == null) {
                 continue;
             }
@@ -75,6 +81,11 @@ public class ScoreDiffGoalEventSource implements GoalEventSource {
         if (match.status() != MatchStatus.SCHEDULED && match.status() != MatchStatus.IN_PLAY) {
             return false;
         }
+        return inTimeWindow(match, now);
+    }
+
+    /** Zeitfenster kickoff <= now <= kickoff + 2,5 h (statusunabhängig; für F9-Persistenz). */
+    private boolean inTimeWindow(Match match, Instant now) {
         Instant kickoff = match.kickoff();
         return !kickoff.isAfter(now) && !now.isAfter(kickoff.plus(WINDOW));
     }

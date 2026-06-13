@@ -32,6 +32,11 @@ app:
     lead-minutes: ${REMINDER_LEAD_MINUTES:60}
   kickoff-notice:
     lead-minutes: ${KICKOFF_NOTICE_LEAD_MINUTES:10}
+  presence:
+    # Garantierter Mindestabstand zwischen Presence-Updates (F9). 5000 ms ⇒ ≤4
+    # Änderungen/20 s, sichere Marge unter dem Discord-Limit (5/20 s).
+    min-update-interval-ms: ${PRESENCE_MIN_UPDATE_INTERVAL_MS:5000}
+    idle-text: ${PRESENCE_IDLE_TEXT:🏆 WM 2026 /tipp}
   football-data:
     base-url: ${FOOTBALL_DATA_BASE_URL:https://api.football-data.org/v4}
     api-key: ${FOOTBALL_DATA_API_KEY:}
