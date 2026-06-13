@@ -26,6 +26,12 @@ public class BotMessageRepository {
                 .optional();
     }
 
+    public void deleteByKey(String key) {
+        jdbc.sql("DELETE FROM bot_messages WHERE key = :key")
+                .param("key", key)
+                .update();
+    }
+
     public void upsert(BotMessage msg) {
         jdbc.sql("""
                         INSERT INTO bot_messages (key, channel_id, message_id, updated_at)

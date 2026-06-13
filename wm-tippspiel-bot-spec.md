@@ -53,7 +53,7 @@ Verwaltet die persistenten, vom Bot editierten Board-Nachrichten (für F7).
 
 | Feld | Typ | Beschreibung |
 |---|---|---|
-| `key` | TEXT (PK) | Logischer Slot, z. B. `board:today`, `board:day:2026-06-14`, `board:nav` |
+| `key` | TEXT (PK) | Logischer Slot. Aktuell genau einer: `board:main` (konsolidiertes Board, F7). Frühere tagesweise Slots (`board:day:<datum>`) und `board:nav` werden migriert/entfernt. |
 | `channel_id` | TEXT | Discord-Channel der Nachricht |
 | `message_id` | TEXT | Discord-Message-ID (zum Editieren) |
 | `updated_at` | TIMESTAMPTZ | Letzter Edit-Zeitpunkt |
@@ -92,16 +92,20 @@ Zeigt das unmittelbar nächste Spiel mit Discord-Relative-Timestamp (`<t:UNIX:R>
 Aggregiert Gesamtpunkte je User, sortiert absteigend. Zusatzspalten: Anzahl abgegebener Tipps, Anzahl exakter Treffer (Tie-Breaker).
 
 ### F7 — Live-Spielplan-Board (selbst-aktualisierend)
-Statt den Spielplan nur on-demand per Command anzuzeigen, hält der Bot in einem dedizierten, für Mitglieder read-only Channel (z. B. `#wm-spielplan`) ein dauerhaftes Board, das er per **Edit** aktuell hält — nicht durch wiederholtes Posten.
+Statt den Spielplan nur on-demand per Command anzuzeigen, hält der Bot in einem dedizierten, für Mitglieder read-only Channel (z. B. `#wm-spielplan`) **ein einziges, konsolidiertes** Board, das er per **Edit** aktuell hält — nicht durch wiederholtes Posten.
+
+> Detailspezifikation der Überarbeitung: `specs/003-consolidated-board/spec.md` (Feature 003).
 
 **Mechanik:**
-- Der Bot postet beim ersten Start je Board-Slot eine Nachricht und speichert deren `message_id` in `bot_messages`. Bei jedem Sync wird die bestehende Nachricht **editiert** statt neu gepostet, damit der Channel sauber bleibt und das Board ortsfest steht.
-- Slots werden nach Tag aufgeteilt (z. B. „Heute" + die nächsten 2–3 Tage), weil 104 Spiele die Embed-Limits sprengen. Ein Slot = eine Nachricht = ein Embed.
-- Anzeige je Spiel: Begegnung, Anstoßzeit als Discord-Relative-Timestamp (`<t:UNIX:R>`, läuft client-seitig als Countdown), TV-Sender, Quoten (falls vorhanden), und sobald vorhanden der Live-/Endstand.
-- Existiert eine getrackte `message_id` nicht mehr (manuell gelöscht), wird sie neu gepostet und in `bot_messages` aktualisiert.
+- Der Board-Channel enthält **genau ein** konsolidiertes Embed, getrackt unter dem einzigen Slot `board:main` in `bot_messages`. Bei jedem Sync wird diese Nachricht **editiert** statt neu gepostet, damit der Channel sauber bleibt und das Board ortsfest steht.
+- Das Embed zeigt die **nächsten 12 anstehenden (noch nicht angepfiffenen) Spiele** als **zusammenhängende Liste in der Embed-Beschreibung** — nicht mehr ein Embed pro Tag.
+- Anzeige je Spiel: Begegnung, Anstoßzeit als Discord-Relative-Timestamp (`<t:UNIX:R>`, läuft client-seitig als Countdown), TV-Sender und Quote (jeweils falls vorhanden). Live-/Endstände gehören nicht ins Board (laufen über F8/Announce-Channel), da nur künftige Spiele gelistet werden.
+- **Design:** Das Embed folgt dem visuellen Stil des Info-Channel-Embeds — konsistente Akzentfarbe, Header (Author-/Titelzeile mit Emoji), Footer mit Update-Zeitstempel und konsistente Emoji-/Strukturierung.
+- **Cleanup beim Start:** Alte, nicht mehr getrackte Board-Nachrichten des Bots im Channel werden beim Start entfernt; die früheren tagesweisen Slots (`board:day:<datum>`) und der separate `board:nav`-Slot werden migriert/entfernt, sodass nur `board:main` verbleibt. Nachrichten anderer Nutzer bleiben unangetastet.
+- Existiert die getrackte `board:main`-Nachricht nicht mehr (manuell gelöscht), wird sie neu gepostet und in `bot_messages` aktualisiert.
 
 **Interaktive Filter (Stufe 2, Standard):**
-- Unter dem Board hängt eine Navigations-Komponente: ein Select-Menu bzw. Buttons („Heute", „Morgen", „Gruppe A–L", „K.o.-Runde").
+- Direkt **unter dem konsolidierten Board** hängt — unverändert — eine Navigations-Komponente: ein Select-Menu bzw. Buttons („Heute", „Morgen", „Gruppe A–L", „K.o.-Runde").
 - Auswahl löst eine **ephemeral** Antwort aus (nur für die klickende Person sichtbar) mit der gefilterten Ansicht. Das öffentliche Board bleibt dabei unverändert.
 - Damit ersetzt F7 die manuellen Commands F1/F2 für den Alltag — diese bleiben als Fallback/Direktzugriff erhalten.
 
@@ -131,7 +135,7 @@ Statt den Spielplan nur on-demand per Command anzuzeigen, hält der Bot in einem
 | `syncOdds` | z. B. alle 6 Std | Quoten von The Odds API holen, per Teamnamen-Heuristik matchen (API-Limits beachten) |
 | `revealJob` | minütlich | Tipps anstehender Spiele offenlegen (F4) |
 | `evaluateJob` | minütlich | Beendete Spiele auswerten (F5) |
-| `boardRefresh` | nach jedem `syncMatches` (bzw. alle 15 Min) | Live-Board-Nachrichten editieren (F7); bei laufenden Spielen optional häufiger für Live-Stände |
+| `boardRefresh` | nach jedem `syncMatches` (bzw. alle 15 Min) | Konsolidiertes Board-Embed (`board:main`) editieren (F7) |
 | `liveGoalPoll` | im Live-Fenster alle ~60s (konfigurierbar), sonst inaktiv | Scores laufender Spiele (`kickoff` … `kickoff + 2.5h`) abfragen, Tore via Goal-Detector erkennen und in den Announce-Channel posten (F8) |
 
 ---
@@ -168,8 +172,9 @@ Statt Embeds eine echte Grafik serverseitig rendern (Java2D/`BufferedImage` oder
 - **Reveal-Edge-Case:** Bei API-Verzögerung könnte ein Spiel angepfiffen sein, bevor der Sync den Status kennt — Reveal hängt bewusst an `kickoff`-Zeit, nicht am API-Status.
 - **Mehrere Server (Guilds):** MVP geht von einer Community/einem Announce-Channel aus. Multi-Guild würde Channel-Konfiguration pro Guild erfordern.
 - **Gateway statt nur Cron:** Durch F7 (interaktive Komponenten) braucht der Bot eine dauerhafte Gateway-Verbindung, nicht nur `@Scheduled`-Jobs. Beim Deployment beachten: der Prozess muss durchlaufen, ein Neustart/Re-Connect darf Slash-Commands und getrackte `bot_messages` nicht verlieren.
-- **Embed-Limits:** Discord erlaubt max. 25 Felder bzw. 6000 Zeichen pro Embed und 10 Embeds pro Nachricht. Bei 104 Spielen niemals alles in eine Nachricht — F7-Slot-Aufteilung nach Tag/Spieltag ist Pflicht, nicht optional.
-- **Board-Recovery:** Manuell gelöschte oder von Discord verworfene Board-Nachrichten müssen erkannt (Edit schlägt mit 404 fehl) und neu gepostet werden; `bot_messages` entsprechend aktualisieren.
+- **Embed-Limits:** Discord erlaubt max. 25 Felder bzw. 6000 Zeichen pro Embed. Das konsolidierte F7-Board zeigt bewusst nur die **nächsten 12 anstehenden Spiele** als Listen-Beschreibung, um sicher unter diesen Grenzen zu bleiben (nicht alle 104 Spiele).
+- **Board-Recovery:** Manuell gelöschte oder von Discord verworfene Board-Nachrichten (`board:main`) müssen erkannt (Edit schlägt mit 404 fehl) und neu gepostet werden; `bot_messages` entsprechend aktualisieren.
+- **Board-Cleanup beim Start:** Verwaiste, nicht mehr getrackte Board-Nachrichten des Bots (insb. Alt-Slots `board:day:*` / `board:nav` aus dem früheren Modell) werden beim Start entfernt; ausschließlich eigene Bot-Nachrichten, niemals die gültige `board:main`-Nachricht oder Nachrichten anderer Nutzer.
 - **F8 — VAR-/Korrekturfälle:** Ein aberkanntes Tor senkt den Stand wieder. Der Goal-Detector darf dann **keine** Benachrichtigung auslösen und muss den gemeldeten Stand (`notified_*`) konsistent nach unten korrigieren. Offen: stilles Zurücksetzen vs. kurze Korrektur-Notiz im Channel.
 - **F8 — API-Verzögerung / Lücken:** Fallen zwischen zwei Polls mehrere Tore (oder liefert die API verspätet/lückenhaft), muss die Score-Differenz als **mehrere Einzel-`GoalEvent`s** aufgelöst werden (je Tor ein Ping), nicht als ein Sammel-Update. Spielminute/Reihenfolge können dabei unpräzise sein; ggf. nur Stand statt Minute melden.
 - **F8 — Recovery nach Bot-Neustart mitten im Spiel:** Der zuletzt gemeldete Stand (`notified_*`) ist persistent, damit nach einem Neustart weder bereits gemeldete Tore erneut gepingt noch in der Downtime gefallene Tore verschluckt werden. Offen: ob in der Downtime gefallene Tore beim ersten Poll nachgemeldet werden (mehrere Pings auf einmal) oder nur der Stand stillschweigend nachgezogen wird.
