@@ -39,6 +39,7 @@ public class OddsSyncService {
             return 0;
         }
         int updated = 0;
+        int unmatched = 0;
         for (OddsEvent event : client.fetchOdds()) {
             String home = nameMapping.canonical(event.homeTeam());
             String away = nameMapping.canonical(event.awayTeam());
@@ -46,9 +47,15 @@ public class OddsSyncService {
             if (match.isPresent()) {
                 matches.updateOdds(match.get().id(), event.oddsHome(), event.oddsDraw(), event.oddsAway());
                 updated++;
+            } else {
+                unmatched++;
+                // Original-Odds-API-Namen loggen → fehlende Mapping-Einträge sind so
+                // direkt aus dem Log in team-mapping.yml übertragbar.
+                log.info("Odds ohne Zuordnung: \"{}\" vs \"{}\" (kanonisch: \"{}\" vs \"{}\")",
+                        event.homeTeam(), event.awayTeam(), home, away);
             }
         }
-        log.info("Odds-Sync abgeschlossen: {} Spiele aktualisiert", updated);
+        log.info("Odds-Sync abgeschlossen: {} Spiele aktualisiert, {} ohne Zuordnung", updated, unmatched);
         return updated;
     }
 }

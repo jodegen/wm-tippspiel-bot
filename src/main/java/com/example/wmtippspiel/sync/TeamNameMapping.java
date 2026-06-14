@@ -2,6 +2,7 @@ package com.example.wmtippspiel.sync;
 
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -40,7 +41,7 @@ public class TeamNameMapping {
             if (root != null && root.get("teams") instanceof Map<?, ?> map) {
                 map.forEach((k, v) -> {
                     if (k != null && v != null) {
-                        oddsToCanonical.put(k.toString(), v.toString());
+                        oddsToCanonical.put(normalize(k.toString()), v.toString());
                     }
                 });
             }
@@ -51,6 +52,14 @@ public class TeamNameMapping {
 
     /** Kanonischer Name oder – mangels Eintrag – der unveränderte Eingabename. */
     public String canonical(String oddsName) {
-        return oddsToCanonical.getOrDefault(oddsName, oddsName);
+        if (oddsName == null) {
+            return null;
+        }
+        return oddsToCanonical.getOrDefault(normalize(oddsName), oddsName);
+    }
+
+    /** Schlüssel-Normalisierung: case-insensitiv und ohne Randleerzeichen. */
+    private static String normalize(String name) {
+        return name.strip().toLowerCase(Locale.ROOT);
     }
 }
