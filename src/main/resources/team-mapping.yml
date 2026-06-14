@@ -13,7 +13,6 @@ teams:
   # bitte per DB-Dump verifizieren — falscher Wert lässt das Paar nur weiter
   # unzugeordnet, bricht aber nichts Funktionierendes):
   "Czech Republic": "Czechia"
-  "Turkey": "Türkiye"
   "USA": "United States"
   # Zuvor von dir gemeldet:
   "Cape Verde": "Cape Verde Islands"
