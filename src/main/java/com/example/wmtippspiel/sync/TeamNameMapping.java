@@ -1,6 +1,7 @@
 package com.example.wmtippspiel.sync;
 
 import java.io.InputStream;
+import java.text.Normalizer;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -58,8 +59,24 @@ public class TeamNameMapping {
         return oddsToCanonical.getOrDefault(normalize(oddsName), oddsName);
     }
 
-    /** Schlüssel-Normalisierung: case-insensitiv und ohne Randleerzeichen. */
+    /** Schlüssel-Normalisierung für die Alias-Map: case-insensitiv, ohne Randleerzeichen. */
     private static String normalize(String name) {
         return name.strip().toLowerCase(Locale.ROOT);
+    }
+
+    /**
+     * Vergleichs-Normalisierung für das Team-Matching: entfernt Diakritika,
+     * Groß-/Kleinschreibung und alle Nicht-Alphanumerischen. Damit matchen
+     * Schreibvarianten ohne Wort-Unterschied automatisch, z. B.
+     * „Bosnia &amp; Herzegovina" ↔ „Bosnia-Herzegovina" oder „Türkiye" ↔ „Turkiye".
+     * Echte Wort-Unterschiede (Czech Republic↔Czechia) bleiben Sache der Alias-Map.
+     */
+    public static String normalizeForMatch(String name) {
+        if (name == null) {
+            return "";
+        }
+        String stripped = Normalizer.normalize(name, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "");
+        return stripped.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
     }
 }

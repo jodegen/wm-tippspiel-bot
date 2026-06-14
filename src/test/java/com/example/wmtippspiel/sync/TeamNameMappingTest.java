@@ -36,4 +36,15 @@ class TeamNameMappingTest {
     void nullSafe() {
         assertThat(mapping.canonical(null)).isNull();
     }
+
+    @Test
+    @DisplayName("normalizeForMatch entfernt Akzente/Satzzeichen/Groß-Klein → Schreibvarianten matchen")
+    void normalizeForMatch() {
+        assertThat(TeamNameMapping.normalizeForMatch("Bosnia & Herzegovina"))
+                .isEqualTo(TeamNameMapping.normalizeForMatch("Bosnia-Herzegovina"));
+        assertThat(TeamNameMapping.normalizeForMatch("Türkiye"))
+                .isEqualTo(TeamNameMapping.normalizeForMatch("Turkiye"));
+        assertThat(TeamNameMapping.normalizeForMatch("Côte d'Ivoire")).isEqualTo("cotedivoire");
+        assertThat(TeamNameMapping.normalizeForMatch(null)).isEmpty();
+    }
 }

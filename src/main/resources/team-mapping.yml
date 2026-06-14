@@ -1,19 +1,22 @@
-# Mapping: The-Odds-API-Teamname  ->  kanonischer Name (football-data.org / DB).
-# Nur nötig, wenn beide Quellen unterschiedlich schreiben. Schlüssel wird beim
-# Laden case-insensitiv normalisiert; der Wert MUSS exakt dem DB-Namen entsprechen
-# (matches.home/away), da die Zuordnung darüber per Gleichheit erfolgt.
+# Alias-Map: The-Odds-API-Teamname -> football-data.org/DB-Name.
+# NUR für echte WORT-Unterschiede nötig. Reine Schreibvarianten (Akzente,
+# Bindestrich/&/Leerzeichen, Groß-Klein) werden vom Matching automatisch
+# normalisiert (TeamNameMapping.normalizeForMatch) — dafür braucht es KEINEN
+# Eintrag, z. B. "Bosnia & Herzegovina" ↔ "Bosnia-Herzegovina".
 #
-# Nicht zugeordnete Odds-Events werden geloggt ("Odds ohne Zuordnung: …") — dort
-# stehen die exakten Odds-API-Namen, falls hier ein Eintrag fehlt.
+# Der Wert muss (nach Normalisierung) dem DB-Namen entsprechen. Verbleibende
+# Abweichungen erscheinen im Log als "Odds ohne Zuordnung: …".
 #
-# WICHTIG: niemals "Congo" (Republik Kongo) auf "Congo DR" abbilden — das sind
-# verschiedene Nationen.
+# WICHTIG: niemals "Congo" (Republik Kongo) auf "Congo DR" abbilden.
 teams:
-  # Kap Verde
+  # Aus dem Log bestätigte Wort-Unterschiede (Werte = vermutete DB-Schreibweise,
+  # bitte per DB-Dump verifizieren — falscher Wert lässt das Paar nur weiter
+  # unzugeordnet, bricht aber nichts Funktionierendes):
+  "Czech Republic": "Czechia"
+  "Turkey": "Türkiye"
+  "USA": "United States"
+  # Zuvor von dir gemeldet:
   "Cape Verde": "Cape Verde Islands"
   "Cabo Verde": "Cape Verde Islands"
-  # DR Kongo
   "DR Congo": "Congo DR"
   "Democratic Republic of the Congo": "Congo DR"
-  "Democratic Republic of Congo": "Congo DR"
-  "Congo DR": "Congo DR"
