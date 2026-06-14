@@ -177,9 +177,16 @@ public class MatchRepository {
                             stage = EXCLUDED.stage,
                             group_label = EXCLUDED.group_label,
                             channel = COALESCE(EXCLUDED.channel, matches.channel),
-                            home_score = EXCLUDED.home_score,
-                            away_score = EXCLUDED.away_score,
-                            status = EXCLUDED.status
+                            -- Einen bereits bekannten Stand NICHT durch einen transient
+                            -- nullen Sync-Wert überschreiben (sonst löst der wiederkehrende
+                            -- echte Stand eine Schein-Neubewertung aus, FR-017a).
+                            home_score = COALESCE(EXCLUDED.home_score, matches.home_score),
+                            away_score = COALESCE(EXCLUDED.away_score, matches.away_score),
+                            -- Ein beendetes Spiel nicht durch Status-Geflacker der API
+                            -- zurückstufen (verhindert erneutes Reveal/„kommend"/„live").
+                            status = CASE
+                                WHEN matches.status = 'FINISHED' AND EXCLUDED.status <> 'FINISHED'
+                                THEN matches.status ELSE EXCLUDED.status END
                         """)
                 .param("id", m.id())
                 .param("home", m.home())

@@ -119,6 +119,43 @@ class PersistenceIntegrationTest {
     }
 
     @Test
+    @DisplayName("Upsert überschreibt bekannten Endstand NICHT mit transientem null-Stand (Schein-Neubewertung)")
+    void upsertDoesNotClobberKnownScoreWithNull() {
+        // Beendetes, ausgewertetes Spiel mit Endstand 1:1.
+        matches.upsert(new Match(200L, "Canada", "Bosnia-Herzegovina", KICKOFF, Stage.GROUP_STAGE, "A",
+                null, null, null, null, 1, 1, MatchStatus.FINISHED, false, false));
+        jdbc.sql("UPDATE matches SET evaluated = TRUE WHERE id = 200").update();
+
+        // Transienter Sync: API liefert das Spiel kurzzeitig OHNE Stand (null/null).
+        matches.upsert(new Match(200L, "Canada", "Bosnia-Herzegovina", KICKOFF, Stage.GROUP_STAGE, "A",
+                null, null, null, null, null, null, MatchStatus.FINISHED, false, false));
+
+        Match stored = matches.findById(200L).orElseThrow();
+        assertThat(stored.homeScore()).isEqualTo(1); // 1:1 bleibt erhalten, nicht genullt
+        assertThat(stored.awayScore()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Upsert stuft ein FINISHED-Spiel nicht durch Status-Geflacker zurück")
+    void upsertDoesNotDowngradeFinishedStatus() {
+        matches.upsert(new Match(201L, "Canada", "Bosnia-Herzegovina", KICKOFF, Stage.GROUP_STAGE, "A",
+                null, null, null, null, 1, 1, MatchStatus.FINISHED, false, false));
+
+        // Transienter Sync meldet das Spiel wieder als IN_PLAY.
+        matches.upsert(new Match(201L, "Canada", "Bosnia-Herzegovina", KICKOFF, Stage.GROUP_STAGE, "A",
+                null, null, null, null, 1, 1, MatchStatus.IN_PLAY, false, false));
+
+        assertThat(matches.findById(201L).orElseThrow().status()).isEqualTo(MatchStatus.FINISHED);
+
+        // Eine echte Endstand-Korrektur (nicht-null) wird weiterhin übernommen.
+        matches.upsert(new Match(201L, "Canada", "Bosnia-Herzegovina", KICKOFF, Stage.GROUP_STAGE, "A",
+                null, null, null, null, 2, 1, MatchStatus.FINISHED, false, false));
+        Match corrected = matches.findById(201L).orElseThrow();
+        assertThat(corrected.homeScore()).isEqualTo(2);
+        assertThat(corrected.awayScore()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("findUnrevealed schließt abgesagte und bereits offengelegte Spiele aus")
     void findUnrevealedFilters() {
         matches.upsert(scheduled(1L));
