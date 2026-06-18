@@ -45,20 +45,20 @@ class EvaluationServiceTest {
     }
 
     @Test
-    @DisplayName("Wertet ein beendetes Spiel mit korrekten 3/1/0-Punkten aus")
+    @DisplayName("Wertet ein beendetes Spiel mit korrekten 4/3/2/0-Punkten aus")
     void evaluatesFinishedMatch() {
         Match finished = finished(10L, 2, 1);
         when(matches.findUnevaluatedFinished()).thenReturn(List.of(finished));
         when(tips.findByMatch(10L)).thenReturn(List.of(
-                tip("a", 10L, 2, 1),   // exakt → 3
-                tip("b", 10L, 3, 0),   // Tendenz Heimsieg → 1
+                tip("a", 10L, 2, 1),   // exakt → 4
+                tip("b", 10L, 3, 0),   // Tendenz Heimsieg, Differenz ≠ → 2
                 tip("c", 10L, 1, 2))); // falsche Tendenz → 0
 
         int count = service.evaluateFinishedMatches();
 
         assertThat(count).isEqualTo(1);
-        verify(tips).updatePoints("a", 10L, 3);
-        verify(tips).updatePoints("b", 10L, 1);
+        verify(tips).updatePoints("a", 10L, 4);
+        verify(tips).updatePoints("b", 10L, 2);
         verify(tips).updatePoints("c", 10L, 0);
         verify(matches).markEvaluated(10L);
         verify(publisher).publishEvaluation(eq(finished), Mockito.anyList(), eq(false));
@@ -80,12 +80,12 @@ class EvaluationServiceTest {
         Match corrected = finished(10L, 2, 2); // Endstand korrigiert auf 2:2
         when(tips.findByMatch(10L)).thenReturn(List.of(
                 tip("a", 10L, 2, 1),   // vorher exakt, jetzt falsche Tendenz → 0
-                tip("b", 10L, 0, 0))); // Unentschieden-Tendenz → 1
+                tip("b", 10L, 0, 0))); // Remis, falsche Höhe (Differenz 0) → 3
 
         service.reevaluate(corrected);
 
         verify(tips).updatePoints("a", 10L, 0);
-        verify(tips).updatePoints("b", 10L, 1);
+        verify(tips).updatePoints("b", 10L, 3);
         verify(matches).markEvaluated(10L);
         verify(publisher).publishEvaluation(eq(corrected), Mockito.anyList(), eq(true));
     }

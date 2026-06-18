@@ -233,28 +233,36 @@ class PersistenceIntegrationTest {
     }
 
     @Test
-    @DisplayName("Leaderboard aggregiert Punkte, Tipps und exakte Treffer und sortiert korrekt")
-    void leaderboardAggregatesAndSorts() {
-        matches.upsert(scheduled(1L));
-        matches.upsert(scheduled(2L));
-        // User1: 3 + 1 = 4 Punkte, 2 Tipps, 1 exakter Treffer
+    @DisplayName("Leaderboard zählt exakte Treffer aus dem Score-Vergleich, NICHT aus dem Punktwert (FR-006/006a)")
+    void leaderboardExactHitsDecoupledFromPoints() {
+        // Zwei ausgewertete Spiele mit echtem Endstand.
+        matches.upsert(finishedResult(1L, 2, 1));
+        matches.upsert(finishedResult(2L, 0, 0));
+        jdbc.sql("UPDATE matches SET evaluated = TRUE WHERE id IN (1, 2)").update();
+
+        // User1: beide Tipps exakt — bewusst mit „falschen" Punktwerten gespeichert,
+        // um zu beweisen, dass die Exakt-Zählung NICHT aus points abgeleitet wird:
+        //   m1 exakt, aber points=0  → zählt trotzdem als Treffer
+        //   m2 exakt, points=4
         tips.upsert(new Tip("u1", 1L, "User1", 2, 1, KICKOFF, 0));
-        tips.updatePoints("u1", 1L, 3);
-        tips.upsert(new Tip("u1", 2L, "User1", 1, 0, KICKOFF, 0));
-        tips.updatePoints("u1", 2L, 1);
-        // User2: 3 Punkte, 1 Tipp, 1 exakter Treffer
-        tips.upsert(new Tip("u2", 1L, "User2", 0, 0, KICKOFF, 0));
-        tips.updatePoints("u2", 1L, 3);
+        tips.updatePoints("u1", 1L, 0);
+        tips.upsert(new Tip("u1", 2L, "User1", 0, 0, KICKOFF, 0));
+        tips.updatePoints("u1", 2L, 4);
+        // User2: nicht exakt (1:0 ≠ 2:1), aber points=4 gespeichert → darf NICHT als Treffer zählen.
+        tips.upsert(new Tip("u2", 1L, "User2", 1, 0, KICKOFF, 0));
+        tips.updatePoints("u2", 1L, 4);
 
         List<LeaderboardEntry> board = tips.leaderboard();
 
         assertThat(board).hasSize(2);
+        // Punktgleichstand (je 4) → Tie-Breaker exakte Treffer entscheidet (u1 vor u2).
         assertThat(board.get(0).userId()).isEqualTo("u1");
         assertThat(board.get(0).totalPoints()).isEqualTo(4);
         assertThat(board.get(0).tipCount()).isEqualTo(2);
-        assertThat(board.get(0).exactHits()).isEqualTo(1);
+        assertThat(board.get(0).exactHits()).isEqualTo(2); // beide exakt, trotz points=0 bei m1
         assertThat(board.get(1).userId()).isEqualTo("u2");
-        assertThat(board.get(1).totalPoints()).isEqualTo(3);
+        assertThat(board.get(1).totalPoints()).isEqualTo(4);
+        assertThat(board.get(1).exactHits()).isZero(); // points=4, aber kein Score-Match
     }
 
     @Test
@@ -308,5 +316,10 @@ class PersistenceIntegrationTest {
     private static Match scheduled(long id) {
         return new Match(id, "Team A", "Team B", KICKOFF, Stage.GROUP_STAGE, "A", null,
                 null, null, null, null, null, MatchStatus.SCHEDULED, false, false);
+    }
+
+    private static Match finishedResult(long id, int home, int away) {
+        return new Match(id, "Team A", "Team B", KICKOFF, Stage.GROUP_STAGE, "A", null,
+                null, null, null, home, away, MatchStatus.FINISHED, false, false);
     }
 }

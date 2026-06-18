@@ -45,8 +45,9 @@ public class InfoEmbed {
                 false);
 
         embed.addField("📊  Punkte",
-                "🎯  **3** — exaktes Ergebnis\n"
-                        + "✅  **1** — richtige Tendenz\n"
+                "🎯  **4** — exaktes Ergebnis\n"
+                        + "🔥  **3** — richtige Tordifferenz\n"
+                        + "✅  **2** — richtige Tendenz\n"
                         + "❌  **0** — daneben",
                 true);
 

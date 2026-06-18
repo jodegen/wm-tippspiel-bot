@@ -82,14 +82,19 @@ Zeigt das unmittelbar nächste Spiel mit Discord-Relative-Timestamp (`<t:UNIX:R>
 ### F5 — Auto-Auswertung
 **Automatisch nach Abpfiff.** Scheduler prüft auf Spiele mit `status = FINISHED AND evaluated = false`. Berechnet Punkte je Tipp, schreibt sie in `tips.points`, postet eine Ergebnis-/Punkte-Übersicht und setzt `evaluated = true`.
 
-**Punkteschema:**
-- **3 Punkte** — exaktes Ergebnis
-- **1 Punkt** — richtige Tendenz (Sieger bzw. Unentschieden), aber falsches Ergebnis
-- **0 Punkte** — daneben
+**Punkteschema (CHECK24, vierstufig):** Stufen werden spezifisch → allgemein
+geprüft, die erste zutreffende gewinnt; alle Spiele gleich gewertet (keine
+Phasen-Gewichtung).
+- **4 Punkte** — exaktes Ergebnis
+- **3 Punkte** — richtige (vorzeichenbehaftete) Tordifferenz, aber nicht exakt (z. B. Tipp 3:0 / Ergebnis 4:1; schließt Unentschieden mit falscher Höhe ein, z. B. Tipp 2:2 / Ergebnis 1:1)
+- **2 Punkte** — richtige Tendenz (Sieger bzw. Unentschieden), aber weder exaktes Ergebnis noch richtige Tordifferenz
+- **0 Punkte** — falsche Tendenz
+
+> Siehe `specs/006-check24-scoring/spec.md` (CHECK24-Umstellung inkl. rückwirkender Neuberechnung).
 
 ### F6 — Leaderboard
 **Command:** `/rangliste`
-Aggregiert Gesamtpunkte je User, sortiert absteigend. Zusatzspalten: Anzahl abgegebener Tipps, Anzahl exakter Treffer (Tie-Breaker).
+Aggregiert Gesamtpunkte je User, sortiert absteigend. Zusatzspalten: Anzahl abgegebener Tipps, Anzahl exakter Treffer (Tie-Breaker). Die exakten Treffer werden **direkt aus dem Vergleich Tipp gegen tatsächliches Ergebnis** ermittelt (nicht aus dem Punktwert abgeleitet), damit die Statistik unabhängig vom Punkteschema korrekt bleibt.
 
 ### F7 — Live-Spielplan-Board (selbst-aktualisierend)
 Statt den Spielplan nur on-demand per Command anzuzeigen, hält der Bot in einem dedizierten, für Mitglieder read-only Channel (z. B. `#wm-spielplan`) **ein einziges, konsolidiertes** Board, das er per **Edit** aktuell hält — nicht durch wiederholtes Posten.
