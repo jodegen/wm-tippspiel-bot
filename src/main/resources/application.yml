@@ -20,6 +20,10 @@ spring:
 
 app:
   timezone-display: ${APP_TIMEZONE_DISPLAY:Europe/Berlin}
+  scoring:
+    # Rückwirkende Punkte-Neuberechnung beim App-Start (F-006/CHECK24-Umstellung).
+    # Idempotent — kann nach erfolgter Migration auf false gesetzt werden.
+    recalc-on-startup: ${SCORING_RECALC_ON_STARTUP:true}
   discord:
     token: ${DISCORD_TOKEN:}
     guild-id: ${DISCORD_GUILD_ID:}

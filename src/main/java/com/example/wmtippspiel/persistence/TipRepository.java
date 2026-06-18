@@ -58,18 +58,28 @@ public class TipRepository {
 
     /**
      * Rangliste: Gesamtpunkte, Tippanzahl und exakte Treffer je Teilnehmer.
-     * Sortiert nach Punkten ↓, dann exakten Treffern ↓ (FR-018/019/020). Der
-     * geteilte Rang bei Gleichstand wird in der Anzeige aufgelöst.
+     * Sortiert nach Punkten ↓, dann exakten Treffern ↓ (FR-007). Der geteilte
+     * Rang bei Gleichstand wird in der Anzeige aufgelöst.
+     *
+     * <p>Die exakten Treffer werden bewusst NICHT aus dem Punktwert abgeleitet,
+     * sondern live aus dem Vergleich Tipp ↔ tatsächliches Ergebnis berechnet
+     * (FR-006/006a) — damit bleibt die Statistik korrekt, unabhängig vom
+     * Punkteschema. Gezählt werden nur ausgewertete Spiele ({@code m.evaluated}).
      */
     public List<LeaderboardEntry> leaderboard() {
         return jdbc.sql("""
-                        SELECT user_id,
-                               MAX(username) AS username,
-                               COALESCE(SUM(points), 0) AS total_points,
+                        SELECT t.user_id,
+                               MAX(t.username) AS username,
+                               COALESCE(SUM(t.points), 0) AS total_points,
                                COUNT(*) AS tip_count,
-                               COUNT(*) FILTER (WHERE points = 3) AS exact_hits
-                        FROM tips
-                        GROUP BY user_id
+                               COUNT(*) FILTER (
+                                   WHERE m.evaluated
+                                     AND t.home_score = m.home_score
+                                     AND t.away_score = m.away_score
+                               ) AS exact_hits
+                        FROM tips t
+                        JOIN matches m ON m.id = t.match_id
+                        GROUP BY t.user_id
                         ORDER BY total_points DESC, exact_hits DESC
                         """)
                 .query((rs, rowNum) -> new LeaderboardEntry(

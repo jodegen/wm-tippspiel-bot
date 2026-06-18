@@ -48,6 +48,13 @@ public class MatchRepository {
                 .list();
     }
 
+    /** Bereits ausgewertete Spiele (Basis der rückwirkenden Punkte-Neuberechnung, F-006). */
+    public List<Match> findEvaluated() {
+        return jdbc.sql("SELECT * FROM matches WHERE evaluated = TRUE")
+                .query(MatchRepository::map)
+                .list();
+    }
+
     /** Tippbare Spiele (Zukunft, Teams bekannt, nicht abgesagt), nach Anpfiff sortiert. */
     public List<Match> findTippable(Instant now, int limit) {
         return jdbc.sql("""
