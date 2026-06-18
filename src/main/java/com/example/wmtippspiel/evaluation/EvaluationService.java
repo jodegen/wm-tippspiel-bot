@@ -15,8 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Wertet beendete Spiele aus und vergibt Punkte nach dem 3/1/0-Schema
- * (FR-014/015/016/017). Idempotent über das {@code evaluated}-Flag; bei
+ * Wertet beendete Spiele aus und vergibt Punkte über {@link ScoringService}
+ * nach dem CHECK24-Schema 4/3/2/0 (FR-001/005/011). Idempotent über das
+ * {@code evaluated}-Flag; bei
  * korrigiertem Endstand erfolgt eine Neubewertung mit Korrektur-Hinweis
  * (FR-017a). Verfassungsmäßig test-pflichtige Kernlogik (Prinzip III).
  */
