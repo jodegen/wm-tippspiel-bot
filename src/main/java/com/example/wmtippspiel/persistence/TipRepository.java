@@ -113,6 +113,30 @@ public class TipRepository {
                 .list();
     }
 
+    /**
+     * Alle bereits ausgewerteten Tipps eines Nutzers (F13) inkl. Begegnung,
+     * getipptem und tatsächlichem Ergebnis sowie Punkten, nach Punkten ↓.
+     */
+    public List<ProfileTipRow> findEvaluatedTipsByUser(String userId) {
+        return jdbc.sql("""
+                        SELECT m.home, m.away,
+                               t.home_score AS th, t.away_score AS ta,
+                               m.home_score AS mh, m.away_score AS ma,
+                               t.points
+                        FROM tips t
+                        JOIN matches m ON m.id = t.match_id
+                        WHERE t.user_id = :u AND m.evaluated = TRUE
+                        ORDER BY t.points DESC, m.kickoff ASC
+                        """)
+                .param("u", userId)
+                .query((rs, rowNum) -> new ProfileTipRow(
+                        rs.getString("home"), rs.getString("away"),
+                        rs.getInt("th"), rs.getInt("ta"),
+                        (Integer) rs.getObject("mh"), (Integer) rs.getObject("ma"),
+                        rs.getInt("points")))
+                .list();
+    }
+
     /** Ausgewertete Einzeltipps eines Spieltags (F12) inkl. Ergebnis/Quoten, nach Punkten ↓. */
     public List<MatchdayTipRow> matchdayEvaluatedTips(String recapKey) {
         return jdbc.sql("""

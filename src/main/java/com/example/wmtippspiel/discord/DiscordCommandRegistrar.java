@@ -2,6 +2,7 @@ package com.example.wmtippspiel.discord;
 
 import com.example.wmtippspiel.config.AppProperties;
 import com.example.wmtippspiel.discord.commands.NaechstesCommand;
+import com.example.wmtippspiel.discord.commands.ProfilCommand;
 import com.example.wmtippspiel.discord.commands.RanglisteCommand;
 import com.example.wmtippspiel.discord.commands.SpielplanCommand;
 import com.example.wmtippspiel.discord.commands.TippCommand;
@@ -57,7 +58,10 @@ public class DiscordCommandRegistrar {
                 Commands.slash(SpielplanCommand.NAME, "Die nächsten Spiele anzeigen")
                         .addOptions(new OptionData(OptionType.INTEGER, SpielplanCommand.OPTION_ANZAHL,
                                 "Anzahl (Standard 5)", false).setMinValue(1).setMaxValue(25)),
-                Commands.slash(NaechstesCommand.NAME, "Das nächste Spiel anzeigen")
+                Commands.slash(NaechstesCommand.NAME, "Das nächste Spiel anzeigen"),
+                Commands.slash(ProfilCommand.NAME, "Persönliche Tippspiel-Bilanz anzeigen")
+                        .addOptions(new OptionData(OptionType.USER, ProfilCommand.OPTION_USER,
+                                "Wessen Profil? (Standard: du selbst)", false))
         ).queue(
                 ok -> log.info("Slash-Commands für Guild {} registriert", guild.getId()),
                 err -> log.error("Slash-Command-Registrierung fehlgeschlagen", err));

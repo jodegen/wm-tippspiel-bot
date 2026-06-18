@@ -1,0 +1,68 @@
+package com.example.wmtippspiel.discord.render;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import com.example.wmtippspiel.leaderboard.LeaderboardRanking;
+import com.example.wmtippspiel.leaderboard.RankedRow;
+import com.example.wmtippspiel.persistence.LeaderboardEntry;
+
+import net.dv8tion.jda.api.entities.MessageEmbed;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+/**
+ * Härtung der Embed-Limits für das Leaderboard-Board (F11, FR-008/SC-004): die
+ * Beschreibung bleibt auch bei vielen/langen Namen unter dem Discord-Hardlimit.
+ */
+class LeaderboardBoardEmbedTest {
+
+    private final LeaderboardBoardEmbed embed =
+            new LeaderboardBoardEmbed(new EmbedStyle(Clock.fixed(Instant.EPOCH, ZoneOffset.UTC)));
+
+    @Test
+    @DisplayName("Top-N begrenzt die Zeilenzahl")
+    void limitsToTopN() {
+        List<RankedRow> rows = rows(50);
+        MessageEmbed result = embed.build(rows, 15);
+        long lines = result.getDescription().lines().count();
+        assertThat(lines).isEqualTo(15);
+    }
+
+    @Test
+    @DisplayName("Sehr lange Namen werden defensiv abgeschnitten (< 4096 Zeichen)")
+    void truncatesDefensivelyUnderHardLimit() {
+        List<LeaderboardEntry> entries = new ArrayList<>();
+        String longName = "X".repeat(200);
+        for (int i = 0; i < 500; i++) {
+            entries.add(new LeaderboardEntry("u" + i, longName + i, 500 - i, 0, 0));
+        }
+        List<RankedRow> rows = LeaderboardRanking.compute(entries, Map.of());
+
+        MessageEmbed result = embed.build(rows, 1000); // Top-N absichtlich groß
+
+        assertThat(result.getDescription().length())
+                .isLessThanOrEqualTo(MessageEmbed.DESCRIPTION_MAX_LENGTH);
+    }
+
+    @Test
+    @DisplayName("Leeres Board zeigt einen freundlichen Hinweis")
+    void emptyBoard() {
+        assertThat(embed.build(List.of(), 15).getDescription()).contains("Noch keine Tipps");
+    }
+
+    private static List<RankedRow> rows(int n) {
+        List<LeaderboardEntry> entries = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            entries.add(new LeaderboardEntry("u" + i, "User" + i, n - i, 0, 0));
+        }
+        return LeaderboardRanking.compute(entries, Map.of());
+    }
+}
