@@ -77,21 +77,21 @@ description: "Task list for Feature 007 — Live-Leaderboard-Board, Spieltags-R�
 
 ### Tests for User Story 2 ⚠️ (zuerst schreiben, müssen fehlschlagen)
 
-- [ ] T014 [P] [US2] Unit-Test `MatchdayRecapServiceTest` (Completion-Erkennung über Recap-Key, `tryClaim`-Idempotenz via Mock, Leerfall „keine Tipps", Re-Evaluation löst keinen zweiten Post aus) in `src/test/java/com/example/wmtippspiel/recap/MatchdayRecapServiceTest.java`
-- [ ] T015 [P] [US2] `PersistenceIntegrationTest` um `MatchdayRecapRepository.tryClaim` (ON CONFLICT DO NOTHING → zweiter Aufruf false) und `matches.matchday` (Lesen/Schreiben) erweitern in `src/test/java/com/example/wmtippspiel/persistence/PersistenceIntegrationTest.java`
+- [X] T014 [P] [US2] Unit-Test `MatchdayRecapServiceTest` (Completion-Erkennung über Recap-Key, `tryClaim`-Idempotenz via Mock, Leerfall „keine Tipps", Re-Evaluation löst keinen zweiten Post aus) in `src/test/java/com/example/wmtippspiel/recap/MatchdayRecapServiceTest.java`
+- [X] T015 [P] [US2] `PersistenceIntegrationTest` um `MatchdayRecapRepository.tryClaim` (ON CONFLICT DO NOTHING → zweiter Aufruf false) und `matches.matchday` (Lesen/Schreiben) erweitern in `src/test/java/com/example/wmtippspiel/persistence/PersistenceIntegrationTest.java`
 
 ### Implementation for User Story 2
 
-- [ ] T016 [P] [US2] Liquibase-Changeset `010-add-matches-matchday.sql` (`ALTER TABLE matches ADD COLUMN matchday INT;` mit `--rollback`) in `src/main/resources/db/changelog/changesets/010-add-matches-matchday.sql`
-- [ ] T017 [P] [US2] Liquibase-Changeset `012-create-matchday-recap.sql` (`recap_key` TEXT PK, `posted_at` TIMESTAMPTZ NOT NULL; mit `--rollback`) in `src/main/resources/db/changelog/changesets/012-create-matchday-recap.sql`
-- [ ] T018 [US2] Includes für `010-add-matches-matchday.sql` und `012-create-matchday-recap.sql` in `src/main/resources/db/changelog/db.changelog-master.yaml` registrieren (in numerischer Reihenfolge: 010 vor 011, dann 012) (depends on T016, T017; T007 für 011)
-- [ ] T019 [US2] `matchday` durchreichen: Record-Komponente in `…/domain/model/Match.java`, Row-Mapper + Upsert-Spalte in `…/persistence/MatchRepository.java`, sowie Übernahme aus football-data.org in der bestehenden Match-Sync-Mapping-Stelle (`…/sync/…`)
-- [ ] T020 [P] [US2] `MatchRepository.findByRecapKey(recapKey)` bzw. `findByMatchday(...)` für die Vollständigkeitsprüfung (alle FINISHED+evaluated) in `…/persistence/MatchRepository.java` (depends on T019)
-- [ ] T021 [P] [US2] `TipRepository.matchdayLeaderboard(recapKey)` (Top-Punktesammler + Nuller nur aus Spielen dieses Recap-Keys) in `…/persistence/TipRepository.java`
-- [ ] T022 [P] [US2] `MatchdayRecapRepository.tryClaim(recapKey): boolean` (`INSERT … ON CONFLICT (recap_key) DO NOTHING`, rowsAffected==1) in `…/persistence/MatchdayRecapRepository.java`
-- [ ] T023 [US2] `MatchdayRecapEmbed.build(...)` über `EmbedStyle.base("Spieltags-Rückblick · …")`: Top-Punktesammler, bester Einzeltipp (primär exakter Treffer; sonst höchste Punktzahl; Tie-Break unwahrscheinlichstes Ergebnis per Quote), Nuller, in `…/discord/render/MatchdayRecapEmbed.java`
-- [ ] T024 [US2] `MatchdayRecapService.postCompletedRecaps()`: Recap-Keys der im Batch ausgewerteten Spiele bilden (`md:<n>` bzw. Fallback `stage:<STAGE>`), je Key Vollständigkeit prüfen, `tryClaim`, bei Erfolg Embed in Announce-Channel posten, in `…/recap/MatchdayRecapService.java` (depends on T020, T021, T022, T023)
-- [ ] T025 [US2] `EvaluateJob` nach dem Batch zusätzlich `MatchdayRecapService.postCompletedRecaps()` aufrufen lassen in `…/scheduling/EvaluateJob.java` (depends on T024)
+- [X] T016 [P] [US2] Liquibase-Changeset `010-add-matches-matchday.sql` (`ALTER TABLE matches ADD COLUMN matchday INT;` mit `--rollback`) in `src/main/resources/db/changelog/changesets/010-add-matches-matchday.sql`
+- [X] T017 [P] [US2] Liquibase-Changeset `012-create-matchday-recap.sql` (`recap_key` TEXT PK, `posted_at` TIMESTAMPTZ NOT NULL; mit `--rollback`) in `src/main/resources/db/changelog/changesets/012-create-matchday-recap.sql`
+- [X] T018 [US2] Includes für `010-add-matches-matchday.sql` und `012-create-matchday-recap.sql` in `src/main/resources/db/changelog/db.changelog-master.yaml` registrieren (in numerischer Reihenfolge: 010 vor 011, dann 012) (depends on T016, T017; T007 für 011)
+- [X] T019 [US2] `matchday` durchreichen: Record-Komponente in `…/domain/model/Match.java`, Row-Mapper + Upsert-Spalte in `…/persistence/MatchRepository.java`, sowie Übernahme aus football-data.org in der bestehenden Match-Sync-Mapping-Stelle (`…/sync/…`)
+- [X] T020 [P] [US2] `MatchRepository.findByRecapKey(recapKey)` bzw. `findByMatchday(...)` für die Vollständigkeitsprüfung (alle FINISHED+evaluated) in `…/persistence/MatchRepository.java` (depends on T019)
+- [X] T021 [P] [US2] `TipRepository.matchdayLeaderboard(recapKey)` (Top-Punktesammler + Nuller nur aus Spielen dieses Recap-Keys) in `…/persistence/TipRepository.java`
+- [X] T022 [P] [US2] `MatchdayRecapRepository.tryClaim(recapKey): boolean` (`INSERT … ON CONFLICT (recap_key) DO NOTHING`, rowsAffected==1) in `…/persistence/MatchdayRecapRepository.java`
+- [X] T023 [US2] `MatchdayRecapEmbed.build(...)` über `EmbedStyle.base("Spieltags-Rückblick · …")`: Top-Punktesammler, bester Einzeltipp (primär exakter Treffer; sonst höchste Punktzahl; Tie-Break unwahrscheinlichstes Ergebnis per Quote), Nuller, in `…/discord/render/MatchdayRecapEmbed.java`
+- [X] T024 [US2] `MatchdayRecapService.postCompletedRecaps()`: Recap-Keys der im Batch ausgewerteten Spiele bilden (`md:<n>` bzw. Fallback `stage:<STAGE>`), je Key Vollständigkeit prüfen, `tryClaim`, bei Erfolg Embed in Announce-Channel posten, in `…/recap/MatchdayRecapService.java` (depends on T020, T021, T022, T023)
+- [X] T025 [US2] `EvaluateJob` nach dem Batch zusätzlich `MatchdayRecapService.postCompletedRecaps()` aufrufen lassen in `…/scheduling/EvaluateJob.java` (depends on T024)
 
 **Checkpoint**: F12 vollständig, idempotent, unabhängig von US1 testbar.
 

@@ -174,15 +174,17 @@ public class MatchRepository {
     public void upsert(Match m) {
         jdbc.sql("""
                         INSERT INTO matches
-                            (id, home, away, kickoff, stage, group_label, channel, home_score, away_score, status)
+                            (id, home, away, kickoff, stage, group_label, channel, home_score, away_score, status, matchday)
                         VALUES
-                            (:id, :home, :away, :kickoff, :stage, :groupLabel, :channel, :homeScore, :awayScore, :status)
+                            (:id, :home, :away, :kickoff, :stage, :groupLabel, :channel, :homeScore, :awayScore, :status, :matchday)
                         ON CONFLICT (id) DO UPDATE SET
                             home = EXCLUDED.home,
                             away = EXCLUDED.away,
                             kickoff = EXCLUDED.kickoff,
                             stage = EXCLUDED.stage,
                             group_label = EXCLUDED.group_label,
+                            -- matchday nicht durch transiente nulls überschreiben.
+                            matchday = COALESCE(EXCLUDED.matchday, matches.matchday),
                             channel = COALESCE(EXCLUDED.channel, matches.channel),
                             -- Einen bereits bekannten Stand NICHT durch einen transient
                             -- nullen Sync-Wert überschreiben (sonst löst der wiederkehrende
@@ -205,7 +207,29 @@ public class MatchRepository {
                 .param("homeScore", m.homeScore())
                 .param("awayScore", m.awayScore())
                 .param("status", m.status().name())
+                .param("matchday", m.matchday())
                 .update();
+    }
+
+    /**
+     * Recap-Keys (F12), deren <b>alle</b> Spiele bereits {@code FINISHED} und
+     * {@code evaluated} sind. Der Recap-Key gruppiert über das football-data-
+     * {@code matchday}-Feld ({@code md:<n>}); fehlt es, dient die Turnier-Phase als
+     * Fallback ({@code stage:<STAGE>}). Abgesagte Spiele bleiben unberücksichtigt.
+     */
+    public List<String> findCompletedRecapKeys() {
+        return jdbc.sql("""
+                        SELECT rk FROM (
+                            SELECT COALESCE('md:' || matchday, 'stage:' || stage) AS rk,
+                                   BOOL_AND(status = 'FINISHED' AND evaluated) AS complete
+                            FROM matches
+                            WHERE status <> 'CANCELLED'
+                            GROUP BY COALESCE('md:' || matchday, 'stage:' || stage)
+                        ) s
+                        WHERE s.complete = TRUE
+                        """)
+                .query(String.class)
+                .list();
     }
 
     public void markRevealed(long id) {
@@ -240,6 +264,7 @@ public class MatchRepository {
                 awayScore,
                 MatchStatus.valueOf(rs.getString("status")),
                 rs.getBoolean("revealed"),
-                rs.getBoolean("evaluated"));
+                rs.getBoolean("evaluated"),
+                (Integer) rs.getObject("matchday"));
     }
 }
