@@ -44,6 +44,7 @@ class PersistenceIntegrationTest {
     private static MatchRepository matches;
     private static TipRepository tips;
     private static BotMessageRepository botMessages;
+    private static LeaderboardSnapshotRepository snapshots;
 
     private static final Instant KICKOFF = Instant.parse("2026-06-14T20:00:00Z");
 
@@ -66,6 +67,7 @@ class PersistenceIntegrationTest {
         matches = new MatchRepository(jdbc);
         tips = new TipRepository(jdbc);
         botMessages = new BotMessageRepository(jdbc);
+        snapshots = new LeaderboardSnapshotRepository(jdbc);
     }
 
     @AfterAll
@@ -75,7 +77,7 @@ class PersistenceIntegrationTest {
 
     @BeforeEach
     void cleanTables() {
-        jdbc.sql("TRUNCATE tips, matches, bot_messages CASCADE").update();
+        jdbc.sql("TRUNCATE tips, matches, bot_messages, leaderboard_snapshot CASCADE").update();
     }
 
     @Test
@@ -311,6 +313,26 @@ class PersistenceIntegrationTest {
 
         // Schutzfelder unberührt.
         assertThat(matches.findById(80L).orElseThrow().revealed()).isFalse();
+    }
+
+    @Test
+    @DisplayName("F11: leaderboard_snapshot wird vollständig ersetzt und übersteht (persistent) einen Neustart")
+    void leaderboardSnapshotReplaceAndReload() {
+        snapshots.replaceAll(java.util.Map.of("u1", 1, "u2", 2, "u3", 2), KICKOFF);
+        assertThat(snapshots.findAllRanks())
+                .containsEntry("u1", 1)
+                .containsEntry("u2", 2)
+                .containsEntry("u3", 2)
+                .hasSize(3);
+
+        // Neuer Batch ersetzt die Basis vollständig (verwaiste User verschwinden).
+        snapshots.replaceAll(java.util.Map.of("u1", 2, "u2", 1), KICKOFF.plusSeconds(60));
+        assertThat(snapshots.findAllRanks())
+                .containsExactlyInAnyOrderEntriesOf(java.util.Map.of("u1", 2, "u2", 1));
+
+        // Frisch instanziiertes Repository (≙ Neustart) liest denselben persistierten Stand.
+        assertThat(new LeaderboardSnapshotRepository(jdbc).findAllRanks())
+                .containsExactlyInAnyOrderEntriesOf(java.util.Map.of("u1", 2, "u2", 1));
     }
 
     private static Match scheduled(long id) {
