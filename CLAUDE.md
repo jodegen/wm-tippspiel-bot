@@ -1,9 +1,9 @@
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/006-check24-scoring/plan.md` (aktuelles Feature — CHECK24-Punkteschema 4/3/2/0).
-Vorheriges Feature: `specs/004-dynamic-bot-presence/plan.md` (F9 — Dynamische Bot-Presence).
-Weitere: `specs/003-consolidated-board/plan.md` (F7), `specs/002-live-goal-notifications/plan.md` (F8).
+`specs/007-leaderboard-recap-profile/plan.md` (aktuelles Feature — F11 Live-Leaderboard-Board, F12 Spieltags-Rückblick, F13 /profil).
+Vorheriges Feature: `specs/006-check24-scoring/plan.md` (CHECK24-Punkteschema 4/3/2/0).
+Weitere: `specs/004-dynamic-bot-presence/plan.md` (F9), `specs/003-consolidated-board/plan.md` (F7), `specs/002-live-goal-notifications/plan.md` (F8).
 Basis-Feature/Architektur: `specs/001-wm-tippspiel-bot/plan.md`.
 
 Aktuelles Feature: **006-check24-scoring** (CHECK24-Punkteschema, vierstufig).

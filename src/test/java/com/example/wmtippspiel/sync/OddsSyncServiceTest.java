@@ -38,7 +38,7 @@ class OddsSyncServiceTest {
         client = mock(OddsClient.class);
         matches = mock(MatchRepository.class);
         AppProperties props = new AppProperties(
-                null, null, null, new AppProperties.Odds(true, null, null));
+                null, null, null, null, new AppProperties.Odds(true, null, null));
         service = new OddsSyncService(client, new TeamNameMapping(), matches,
                 Clock.fixed(NOW, ZoneOffset.UTC), props);
     }
@@ -84,7 +84,7 @@ class OddsSyncServiceTest {
     @Test
     @DisplayName("Deaktivierte Quoten → kein Abruf")
     void disabledDoesNothing() {
-        AppProperties off = new AppProperties(null, null, null, new AppProperties.Odds(false, null, null));
+        AppProperties off = new AppProperties(null, null, null, null, new AppProperties.Odds(false, null, null));
         OddsSyncService disabled = new OddsSyncService(client, new TeamNameMapping(), matches,
                 Clock.fixed(NOW, ZoneOffset.UTC), off);
         assertThat(disabled.sync()).isZero();

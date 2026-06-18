@@ -91,6 +91,74 @@ public class TipRepository {
                 .list();
     }
 
+    /**
+     * Punktesumme je Teilnehmer für einen Spieltag/Recap-Key (F12), absteigend.
+     * Recap-Key gruppiert über {@code matchday} ({@code md:<n>}) bzw. Fallback
+     * {@code stage:<STAGE>} — konsistent zu {@link MatchRepository#findCompletedRecapKeys()}.
+     */
+    public List<MatchdayScore> matchdayLeaderboard(String recapKey) {
+        return jdbc.sql("""
+                        SELECT t.user_id,
+                               MAX(t.username) AS username,
+                               COALESCE(SUM(t.points), 0) AS pts
+                        FROM tips t
+                        JOIN matches m ON m.id = t.match_id
+                        WHERE COALESCE('md:' || m.matchday, 'stage:' || m.stage) = :rk
+                        GROUP BY t.user_id
+                        ORDER BY pts DESC, username ASC
+                        """)
+                .param("rk", recapKey)
+                .query((rs, rowNum) -> new MatchdayScore(
+                        rs.getString("user_id"), rs.getString("username"), rs.getInt("pts")))
+                .list();
+    }
+
+    /**
+     * Alle bereits ausgewerteten Tipps eines Nutzers (F13) inkl. Begegnung,
+     * getipptem und tatsächlichem Ergebnis sowie Punkten, nach Punkten ↓.
+     */
+    public List<ProfileTipRow> findEvaluatedTipsByUser(String userId) {
+        return jdbc.sql("""
+                        SELECT m.home, m.away,
+                               t.home_score AS th, t.away_score AS ta,
+                               m.home_score AS mh, m.away_score AS ma,
+                               t.points
+                        FROM tips t
+                        JOIN matches m ON m.id = t.match_id
+                        WHERE t.user_id = :u AND m.evaluated = TRUE
+                        ORDER BY t.points DESC, m.kickoff ASC
+                        """)
+                .param("u", userId)
+                .query((rs, rowNum) -> new ProfileTipRow(
+                        rs.getString("home"), rs.getString("away"),
+                        rs.getInt("th"), rs.getInt("ta"),
+                        (Integer) rs.getObject("mh"), (Integer) rs.getObject("ma"),
+                        rs.getInt("points")))
+                .list();
+    }
+
+    /** Ausgewertete Einzeltipps eines Spieltags (F12) inkl. Ergebnis/Quoten, nach Punkten ↓. */
+    public List<MatchdayTipRow> matchdayEvaluatedTips(String recapKey) {
+        return jdbc.sql("""
+                        SELECT t.username, t.home_score AS th, t.away_score AS ta, t.points,
+                               m.home, m.away, m.home_score AS mh, m.away_score AS ma,
+                               m.odds_home, m.odds_draw, m.odds_away
+                        FROM tips t
+                        JOIN matches m ON m.id = t.match_id
+                        WHERE COALESCE('md:' || m.matchday, 'stage:' || m.stage) = :rk
+                          AND m.evaluated = TRUE
+                        ORDER BY t.points DESC, t.username ASC
+                        """)
+                .param("rk", recapKey)
+                .query((rs, rowNum) -> new MatchdayTipRow(
+                        rs.getString("username"),
+                        rs.getInt("th"), rs.getInt("ta"), rs.getInt("points"),
+                        (Integer) rs.getObject("mh"), (Integer) rs.getObject("ma"),
+                        rs.getString("home"), rs.getString("away"),
+                        rs.getBigDecimal("odds_home"), rs.getBigDecimal("odds_draw"), rs.getBigDecimal("odds_away")))
+                .list();
+    }
+
     public void updatePoints(String userId, long matchId, int points) {
         jdbc.sql("UPDATE tips SET points = :points WHERE user_id = :userId AND match_id = :matchId")
                 .param("points", points)

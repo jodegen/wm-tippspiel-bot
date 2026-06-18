@@ -72,6 +72,7 @@ public class FootballDataClient {
         Stage stage = mapStage((String) m.get("stage"));
         String groupLabel = mapGroup((String) m.get("group"));
         MatchStatus status = mapStatus((String) m.get("status"));
+        Integer matchday = asInt(m.get("matchday"));
 
         Integer homeScore = null;
         Integer awayScore = null;
@@ -82,7 +83,7 @@ public class FootballDataClient {
         }
 
         return new Match(id, home, away, kickoff, stage, groupLabel,
-                null, null, null, null, homeScore, awayScore, status, false, false);
+                null, null, null, null, homeScore, awayScore, status, false, false, matchday);
     }
 
     private static String teamName(Object team) {

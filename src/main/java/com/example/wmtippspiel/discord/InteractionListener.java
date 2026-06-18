@@ -1,6 +1,7 @@
 package com.example.wmtippspiel.discord;
 
 import com.example.wmtippspiel.discord.commands.NaechstesCommand;
+import com.example.wmtippspiel.discord.commands.ProfilCommand;
 import com.example.wmtippspiel.discord.commands.RanglisteCommand;
 import com.example.wmtippspiel.discord.commands.SpielplanCommand;
 import com.example.wmtippspiel.discord.commands.TippAutocomplete;
@@ -33,6 +34,7 @@ public class InteractionListener extends ListenerAdapter {
     private final RanglisteCommand ranglisteCommand;
     private final SpielplanCommand spielplanCommand;
     private final NaechstesCommand naechstesCommand;
+    private final ProfilCommand profilCommand;
     private final BoardFilterHandler boardFilterHandler;
     private final NotifyService notifyService;
 
@@ -42,6 +44,7 @@ public class InteractionListener extends ListenerAdapter {
                                RanglisteCommand ranglisteCommand,
                                SpielplanCommand spielplanCommand,
                                NaechstesCommand naechstesCommand,
+                               ProfilCommand profilCommand,
                                BoardFilterHandler boardFilterHandler,
                                NotifyService notifyService) {
         this.tippCommand = tippCommand;
@@ -50,6 +53,7 @@ public class InteractionListener extends ListenerAdapter {
         this.ranglisteCommand = ranglisteCommand;
         this.spielplanCommand = spielplanCommand;
         this.naechstesCommand = naechstesCommand;
+        this.profilCommand = profilCommand;
         this.boardFilterHandler = boardFilterHandler;
         this.notifyService = notifyService;
     }
@@ -62,6 +66,7 @@ public class InteractionListener extends ListenerAdapter {
             case RanglisteCommand.NAME -> ranglisteCommand.handle(event);
             case SpielplanCommand.NAME -> spielplanCommand.handle(event);
             case NaechstesCommand.NAME -> naechstesCommand.handle(event);
+            case ProfilCommand.NAME -> profilCommand.handle(event);
             default -> { /* unbekannter Command – ignorieren */ }
         }
     }

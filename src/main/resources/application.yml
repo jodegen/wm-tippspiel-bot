@@ -32,6 +32,11 @@ app:
     info-channel-id: ${DISCORD_INFO_CHANNEL_ID:}
     tip-channel-id: ${DISCORD_TIP_CHANNEL_ID:}
     notify-role-id: ${DISCORD_NOTIFY_ROLE_ID:}
+    # Eigener, für Mitglieder read-only Ranglisten-Channel (F11), getrennt vom Spielplan-Board.
+    leaderboard-channel-id: ${DISCORD_LEADERBOARD_CHANNEL_ID:1517153509621895349}
+  leaderboard:
+    # Anzahl der im Leaderboard-Board angezeigten Top-Plätze (F11).
+    top-n: ${LEADERBOARD_TOP_N:15}
   reminder:
     lead-minutes: ${REMINDER_LEAD_MINUTES:60}
   kickoff-notice:

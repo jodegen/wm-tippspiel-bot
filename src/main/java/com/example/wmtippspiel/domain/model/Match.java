@@ -7,6 +7,10 @@ import java.time.Instant;
  * Eine WM-Begegnung. Zeitangaben sind UTC ({@link Instant}, Verfassung
  * Prinzip IV). Die abgeleiteten Prädikate kapseln die testbare Kernlogik für
  * Tippbarkeit, Reveal-Timing und Auswertungsfähigkeit (Verfassung Prinzip III).
+ *
+ * <p>{@code matchday} ist der Spieltag-Bezeichner aus football-data.org
+ * (nullable; bei manchen K.o.-Daten nicht gesetzt) und dient als Gruppierung für
+ * den Spieltags-Rückblick (F12).
  */
 public record Match(
         long id,
@@ -23,14 +27,26 @@ public record Match(
         Integer awayScore,
         MatchStatus status,
         boolean revealed,
-        boolean evaluated) {
+        boolean evaluated,
+        Integer matchday) {
 
     private static final String TBD = "TBD";
+
+    /**
+     * Abwärtskompatibler Konstruktor ohne {@code matchday} (Default {@code null}) –
+     * hält bestehende Aufrufer/Tests unverändert lauffähig.
+     */
+    public Match(long id, String home, String away, Instant kickoff, Stage stage, String groupLabel,
+                 String channel, BigDecimal oddsHome, BigDecimal oddsDraw, BigDecimal oddsAway,
+                 Integer homeScore, Integer awayScore, MatchStatus status, boolean revealed, boolean evaluated) {
+        this(id, home, away, kickoff, stage, groupLabel, channel, oddsHome, oddsDraw, oddsAway,
+                homeScore, awayScore, status, revealed, evaluated, null);
+    }
 
     /** Kopie mit gesetztem TV-Sender (für das manuell gepflegte Mapping beim Sync). */
     public Match withChannel(String newChannel) {
         return new Match(id, home, away, kickoff, stage, groupLabel, newChannel,
-                oddsHome, oddsDraw, oddsAway, homeScore, awayScore, status, revealed, evaluated);
+                oddsHome, oddsDraw, oddsAway, homeScore, awayScore, status, revealed, evaluated, matchday);
     }
 
     /** Beide Teilnehmer stehen fest (keine "TBD"-Begegnung). */

@@ -53,7 +53,7 @@ Verwaltet die persistenten, vom Bot editierten Board-Nachrichten (für F7).
 
 | Feld | Typ | Beschreibung |
 |---|---|---|
-| `key` | TEXT (PK) | Logischer Slot. Aktuell genau einer: `board:main` (konsolidiertes Board, F7). Frühere tagesweise Slots (`board:day:<datum>`) und `board:nav` werden migriert/entfernt. |
+| `key` | TEXT (PK) | Logischer Slot. `board:main` (konsolidiertes Spielplan-Board, F7) und `board:leaderboard` (Live-Ranglisten-Board, F11). Frühere tagesweise Slots (`board:day:<datum>`) und `board:nav` werden migriert/entfernt. |
 | `channel_id` | TEXT | Discord-Channel der Nachricht |
 | `message_id` | TEXT | Discord-Message-ID (zum Editieren) |
 | `updated_at` | TIMESTAMPTZ | Letzter Edit-Zeitpunkt |
@@ -146,6 +146,36 @@ Der Bot spiegelt über seine Discord-Presence (Activity-Typ **watching**, „Sie
 - Nur **Standard-Unicode-Emojis** (keine custom Discord-Emojis).
 - Nach Start/Reconnect wird die Presence aus dem aktuellen Zustand neu gesetzt.
 
+### F11 — Live-Leaderboard-Board (selbst-aktualisierend)
+Analog zum Spielplan-Board (F7) hält der Bot in einem dedizierten, für Mitglieder read-only Channel (z. B. `#wm-rangliste`) **ein einziges** Ranglisten-Embed, das er per **Edit** aktuell hält — nicht durch wiederholtes Neuposten.
+
+> Detailspezifikation: `specs/007-leaderboard-recap-profile/spec.md` (Feature 007).
+
+**Mechanik:**
+- Genau eine getrackte Nachricht unter dem neuen `bot_messages`-Slot `board:leaderboard`. Bei Aktualisierung wird **editiert** statt neu gepostet.
+- **Trigger:** die Auto-Auswertung (F5) — nach jeder Punkteänderung wird das Board editiert.
+- Zeigt die **Top-N Nutzer** (Default 15) je Zeile mit Rang, Name, Gesamtpunkten, Anzahl **exakter Treffer** (direkter Tipp-gegen-Ergebnis-Vergleich, **nicht** aus dem Punktwert abgeleitet) und der **Rang-Veränderung seit der letzten Auswertung** (↑2, ↓1, –, „NEU"). Die Vergleichsbasis (Rang der letzten Auswertung) wird persistent gehalten und übersteht einen Neustart.
+- **Embed-Limits:** kompakte Listen-Beschreibung, defensiv abgeschnitten, sodass die Discord-Grenzen sicher eingehalten werden.
+- **Design** folgt dem Stil der übrigen Board-/Info-Embeds (Akzentfarbe, Header mit Emoji, Footer mit Update-Zeitstempel).
+- **Cleanup & Recovery wie F7:** verwaiste eigene Board-Nachrichten werden beim Start entfernt (fremde bleiben unangetastet); eine manuell gelöschte `board:leaderboard`-Nachricht wird neu gepostet und in `bot_messages` aktualisiert.
+
+### F12 — Spieltags-Rückblick
+Nach Abschluss **aller** Spiele eines Spieltags postet der Bot automatisch **einmalig** eine Zusammenfassung in den Announce-Channel.
+
+> Detailspezifikation: `specs/007-leaderboard-recap-profile/spec.md` (Feature 007).
+
+**Mechanik:**
+- **Spieltag-Abgrenzung:** Gruppierung über den Spieltag-/`matchday`-Bezeichner aus den football-data.org-Quelldaten.
+- **Auslöser:** Ein Spieltag gilt als abgeschlossen, sobald **alle** zugehörigen Spiele `FINISHED` **und** `evaluated` sind — rein am Vollständigkeits-Kriterium, nicht an einer Uhrzeit.
+- **Inhalt:** Top-Punktesammler des Spieltags (nur Punkte aus Spielen dieses Spieltags), bester Einzeltipp (primär exakter Treffer; fehlt ein solcher, der höchstbepunktete Tipp — bei Gleichstand auf das unwahrscheinlichste Ergebnis), sowie wer am Spieltag leer ausging.
+- **Idempotenz:** pro Spieltag wird **höchstens einmal** gepostet (persistenter Marker pro Spieltag), auch über Neustarts und wiederholte Job-Läufe hinweg. Eine nachträgliche Ergebniskorrektur löst **keinen** zweiten Rückblick aus.
+
+### F13 — `/profil [user]`-Command
+**Command:** `/profil [user]`
+Zeigt die persönliche Bilanz eines Nutzers (Default: der aufrufende User; optional ein als Argument genannter User): aktueller Rang, Gesamtpunkte, Anzahl exakter Treffer, Trefferquote, bester und schlechtester Tipp sowie die Verteilung der Punktstufen (wie oft 4 / 3 / 2 / 0). Exakte Treffer und Punktstufen werden konsistent zum CHECK24-Schema aus dem direkten Tipp-gegen-Ergebnis-Vergleich ermittelt. Die Antwort wird **öffentlich** im Channel gepostet (nicht ephemeral). User ohne (ausgewertete) Tipps erhalten eine gültige leere Bilanz statt einer Fehlermeldung.
+
+> Detailspezifikation: `specs/007-leaderboard-recap-profile/spec.md` (Feature 007).
+
 ---
 
 ## Hintergrund-Jobs (Spring `@Scheduled`)
@@ -155,7 +185,7 @@ Der Bot spiegelt über seine Discord-Presence (Activity-Typ **watching**, „Sie
 | `syncMatches` | z. B. alle 15 Min | Spielplan & Ergebnisse von football-data.org holen, `matches` upserten |
 | `syncOdds` | z. B. alle 6 Std | Quoten von The Odds API holen, per Teamnamen-Heuristik matchen (API-Limits beachten) |
 | `revealJob` | minütlich | Tipps anstehender Spiele offenlegen (F4) |
-| `evaluateJob` | minütlich | Beendete Spiele auswerten (F5) |
+| `evaluateJob` | minütlich | Beendete Spiele auswerten (F5); stößt nach Punkteänderung das Leaderboard-Board (F11) und – bei abgeschlossenem Spieltag – den Spieltags-Rückblick (F12) an |
 | `boardRefresh` | nach jedem `syncMatches` (bzw. alle 15 Min) | Konsolidiertes Board-Embed (`board:main`) editieren (F7) |
 | `liveGoalPoll` | im Live-Fenster alle ~60s (konfigurierbar), sonst inaktiv | Scores laufender Spiele (`kickoff` … `kickoff + 2.5h`) abfragen, Tore via Goal-Detector erkennen und in den Announce-Channel posten (F8) |
 

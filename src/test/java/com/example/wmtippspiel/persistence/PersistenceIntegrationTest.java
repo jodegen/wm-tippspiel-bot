@@ -44,6 +44,8 @@ class PersistenceIntegrationTest {
     private static MatchRepository matches;
     private static TipRepository tips;
     private static BotMessageRepository botMessages;
+    private static LeaderboardSnapshotRepository snapshots;
+    private static MatchdayRecapRepository matchdayRecaps;
 
     private static final Instant KICKOFF = Instant.parse("2026-06-14T20:00:00Z");
 
@@ -66,6 +68,8 @@ class PersistenceIntegrationTest {
         matches = new MatchRepository(jdbc);
         tips = new TipRepository(jdbc);
         botMessages = new BotMessageRepository(jdbc);
+        snapshots = new LeaderboardSnapshotRepository(jdbc);
+        matchdayRecaps = new MatchdayRecapRepository(jdbc);
     }
 
     @AfterAll
@@ -75,7 +79,7 @@ class PersistenceIntegrationTest {
 
     @BeforeEach
     void cleanTables() {
-        jdbc.sql("TRUNCATE tips, matches, bot_messages CASCADE").update();
+        jdbc.sql("TRUNCATE tips, matches, bot_messages, leaderboard_snapshot, matchday_recap CASCADE").update();
     }
 
     @Test
@@ -313,6 +317,66 @@ class PersistenceIntegrationTest {
         assertThat(matches.findById(80L).orElseThrow().revealed()).isFalse();
     }
 
+    @Test
+    @DisplayName("F11: leaderboard_snapshot wird vollständig ersetzt und übersteht (persistent) einen Neustart")
+    void leaderboardSnapshotReplaceAndReload() {
+        snapshots.replaceAll(java.util.Map.of("u1", 1, "u2", 2, "u3", 2), KICKOFF);
+        assertThat(snapshots.findAllRanks())
+                .containsEntry("u1", 1)
+                .containsEntry("u2", 2)
+                .containsEntry("u3", 2)
+                .hasSize(3);
+
+        // Neuer Batch ersetzt die Basis vollständig (verwaiste User verschwinden).
+        snapshots.replaceAll(java.util.Map.of("u1", 2, "u2", 1), KICKOFF.plusSeconds(60));
+        assertThat(snapshots.findAllRanks())
+                .containsExactlyInAnyOrderEntriesOf(java.util.Map.of("u1", 2, "u2", 1));
+
+        // Frisch instanziiertes Repository (≙ Neustart) liest denselben persistierten Stand.
+        assertThat(new LeaderboardSnapshotRepository(jdbc).findAllRanks())
+                .containsExactlyInAnyOrderEntriesOf(java.util.Map.of("u1", 2, "u2", 1));
+    }
+
+    @Test
+    @DisplayName("F12: matchday round-trip; findCompletedRecapKeys nur bei vollständig FINISHED+evaluated")
+    void matchdayPersistenceAndCompletedRecapKeys() {
+        // Spieltag 1: zwei Spiele, beide FINISHED + evaluated → vollständig (md:1).
+        matches.upsert(finishedMatchday(301L, 1, 2, 1));
+        matches.upsert(finishedMatchday(302L, 1, 0, 0));
+        jdbc.sql("UPDATE matches SET evaluated = TRUE WHERE id IN (301, 302)").update();
+        // Spieltag 2: ein Spiel FINISHED+evaluated, eines noch nicht ausgewertet → unvollständig.
+        matches.upsert(finishedMatchday(303L, 2, 3, 0));
+        jdbc.sql("UPDATE matches SET evaluated = TRUE WHERE id = 303").update();
+        matches.upsert(finishedMatchday(304L, 2, 1, 1)); // evaluated bleibt false
+
+        assertThat(matches.findById(301L).orElseThrow().matchday()).isEqualTo(1);
+        assertThat(matches.findCompletedRecapKeys()).containsExactly("md:1");
+    }
+
+    @Test
+    @DisplayName("F12: matchdayLeaderboard summiert Punkte je Spieltag; tryClaim ist exakt einmalig")
+    void matchdayLeaderboardAndIdempotentClaim() {
+        matches.upsert(finishedMatchday(401L, 5, 2, 1));
+        matches.upsert(finishedMatchday(402L, 5, 0, 0));
+        jdbc.sql("UPDATE matches SET evaluated = TRUE WHERE id IN (401, 402)").update();
+        tips.upsert(new Tip("u1", 401L, "Alice", 2, 1, KICKOFF, 0));
+        tips.updatePoints("u1", 401L, 4);
+        tips.upsert(new Tip("u1", 402L, "Alice", 1, 0, KICKOFF, 0));
+        tips.updatePoints("u1", 402L, 2);
+        tips.upsert(new Tip("u2", 401L, "Bob", 0, 3, KICKOFF, 0));
+        tips.updatePoints("u2", 401L, 0);
+
+        List<MatchdayScore> board = tips.matchdayLeaderboard("md:5");
+        assertThat(board).extracting(MatchdayScore::username).containsExactly("Alice", "Bob");
+        assertThat(board.get(0).points()).isEqualTo(6);
+        assertThat(board.get(1).points()).isZero();
+
+        // Idempotenz: erster Claim true, jeder weitere false (auch nach „Neustart").
+        assertThat(matchdayRecaps.tryClaim("md:5", KICKOFF)).isTrue();
+        assertThat(matchdayRecaps.tryClaim("md:5", KICKOFF.plusSeconds(60))).isFalse();
+        assertThat(new MatchdayRecapRepository(jdbc).tryClaim("md:5", KICKOFF.plusSeconds(120))).isFalse();
+    }
+
     private static Match scheduled(long id) {
         return new Match(id, "Team A", "Team B", KICKOFF, Stage.GROUP_STAGE, "A", null,
                 null, null, null, null, null, MatchStatus.SCHEDULED, false, false);
@@ -321,5 +385,10 @@ class PersistenceIntegrationTest {
     private static Match finishedResult(long id, int home, int away) {
         return new Match(id, "Team A", "Team B", KICKOFF, Stage.GROUP_STAGE, "A", null,
                 null, null, null, home, away, MatchStatus.FINISHED, false, false);
+    }
+
+    private static Match finishedMatchday(long id, int matchday, int home, int away) {
+        return new Match(id, "Team A", "Team B", KICKOFF, Stage.GROUP_STAGE, "A", null,
+                null, null, null, home, away, MatchStatus.FINISHED, false, false, matchday);
     }
 }
