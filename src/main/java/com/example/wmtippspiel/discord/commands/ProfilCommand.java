@@ -51,6 +51,6 @@ public class ProfilCommand {
         List<ProfileTipRow> evaluatedTips = tips.findEvaluatedTipsByUser(target.getId());
 
         UserProfile profile = ProfileStats.build(target.getEffectiveName(), mine, evaluatedTips);
-        event.getHook().editOriginalEmbeds(embed.build(profile)).queue();
+        event.getHook().editOriginalEmbeds(embed.build(profile, target.getEffectiveAvatarUrl())).queue();
     }
 }
