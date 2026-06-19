@@ -41,7 +41,9 @@ class RevealGateTest {
     private final MatchRepository matches = mock(MatchRepository.class);
     private final TipRepository tips = mock(TipRepository.class);
     private final LeaderboardSnapshotRepository snapshots = mock(LeaderboardSnapshotRepository.class);
-    private final PublicQueryService service = new PublicQueryService(matches, tips, snapshots, CLOCK);
+    private final PublicIdService publicIds = mock(PublicIdService.class);
+    private final PublicQueryService service =
+            new PublicQueryService(matches, tips, snapshots, publicIds, CLOCK);
 
     private static Match match(Instant kickoff, boolean revealed, boolean evaluated, MatchStatus status) {
         return new Match(MATCH_ID, "Deutschland", "Frankreich", kickoff, Stage.GROUP_STAGE, "A", "ARD",

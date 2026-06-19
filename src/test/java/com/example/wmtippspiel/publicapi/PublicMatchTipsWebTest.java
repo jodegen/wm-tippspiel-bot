@@ -34,6 +34,9 @@ class PublicMatchTipsWebTest {
     @MockBean
     private PublicQueryService query;
 
+    @MockBean
+    private com.example.wmtippspiel.config.AppProperties properties;
+
     @Test
     @DisplayName("Vor Anpfiff: released=false, keine Namen/Tipps im JSON")
     void lockedBeforeKickoff() throws Exception {

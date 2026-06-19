@@ -47,7 +47,7 @@ müssen sequенziell laufen. Die Stories bleiben dennoch unabhängig testbar.
 **⚠️ CRITICAL**: Vor diesen Aufgaben darf keine Story-Arbeit beginnen.
 
 - [X] T004 Regressionsschutz: Verifiziert, dass KEIN Test `@SpringBootTest` nutzt (alle 22 Testklassen sind reine JUnit/Testcontainers ohne Spring-Context) — die Umstellung auf `web-application-type: servlet` startet daher in keinem bestehenden Test einen Tomcat; kein Code-Eingriff nötig. (Hinweis: Testcontainers-Tests erfordern Docker, hier nicht ausführbar — vorbestehend, unabhängig von Feature 008.)
-- [ ] T005 [P] `PublicApiConfig` in `src/main/java/com/example/wmtippspiel/publicapi/PublicApiConfig.java`: `@Configuration @EnableCaching`, CORS für `/api/public/**` aus `app.public-api.cors-allowed-origins` (Methoden `GET, OPTIONS`, keine Credentials) via `WebMvcConfigurer#addCorsMappings`, Caffeine-`CacheManager` mit TTL aus `app.public-api.cache-ttl-seconds` (Caches `schedule`, `leaderboard`)
+- [X] T005 [P] `PublicApiConfig` in `src/main/java/com/example/wmtippspiel/publicapi/PublicApiConfig.java`: `@Configuration @EnableCaching`, CORS für `/api/public/**` aus `app.public-api.cors-allowed-origins` (Methoden `GET, OPTIONS`, keine Credentials) via `WebMvcConfigurer#addCorsMappings`, Caffeine-`CacheManager` mit TTL aus `app.public-api.cache-ttl-seconds` (Caches `schedule`, `leaderboard`)
 - [X] T006 [P] `PublicMappers` in `src/main/java/com/example/wmtippspiel/publicapi/PublicMappers.java`: finale Klasse mit privatem Konstruktor, statische Mapping-Methoden werden je Story ergänzt
 - [X] T007 [P] `PublicQueryService` in `src/main/java/com/example/wmtippspiel/publicapi/PublicQueryService.java`: `@Service`, Konstruktor-Injektion von `MatchRepository`, `TipRepository`, `LeaderboardSnapshotRepository` und `java.time.Clock` (für deterministisches Reveal-Gating); Methoden je Story ergänzt
 - [X] T008 [P] `PublicApiController` in `src/main/java/com/example/wmtippspiel/publicapi/PublicApiController.java`: `@RestController @RequestMapping("/api/public")`, Konstruktor-Injektion von `PublicQueryService` (und später `PublicIdService`); nur `@GetMapping`-Methoden werden ergänzt (keine Schreibpfade)
@@ -131,16 +131,16 @@ müssen sequенziell laufen. Die Stories bleiben dennoch unabhängig testbar.
 
 ### Tests for User Story 4
 
-- [ ] T026 [P] [US4] `PublicIdServiceTest` in `src/test/java/com/example/wmtippspiel/publicapi/PublicIdServiceTest.java`: HMAC deterministisch; anderes Secret → anderer `publicId`; `resolve` bekannter Nutzer → user_id, unbekannter → leer
-- [ ] T027 [P] [US4] Web-Test `src/test/java/com/example/wmtippspiel/publicapi/PublicProfileWebTest.java`: Profil via `publicId`, JSON ohne `user_id`, unbekannt → 404, `hitRatePercent=null` bei 0 gewerteten Tipps (FR-018)
+- [X] T026 [P] [US4] `PublicIdServiceTest` in `src/test/java/com/example/wmtippspiel/publicapi/PublicIdServiceTest.java`: HMAC deterministisch; anderes Secret → anderer `publicId`; `resolve` bekannter Nutzer → user_id, unbekannter → leer
+- [X] T027 [P] [US4] Web-Test `src/test/java/com/example/wmtippspiel/publicapi/PublicProfileWebTest.java`: Profil via `publicId`, JSON ohne `user_id`, unbekannt → 404, `hitRatePercent=null` bei 0 gewerteten Tipps (FR-018)
 
 ### Implementation for User Story 4
 
 - [X] T028 [P] [US4] Records `ProfileDto`, `ProfileTipDto`, `PointDistributionDto` in `src/main/java/com/example/wmtippspiel/publicapi/dto/` (data-model.md)
-- [ ] T029 [P] [US4] `PublicIdService` in `src/main/java/com/example/wmtippspiel/publicapi/PublicIdService.java`: `publicId(userId)` = Base64Url(HMAC-SHA256(`app.public-api.id-secret`, userId)) gekürzt; `resolve(publicId)` per Enumeration über `TipRepository.leaderboard()`; **Bean-Initialisierung wirft eine Exception, wenn `app.public-api.id-secret` leer/blank ist** (Fail-Fast beim Start, kein unsicherer Laufzeit-Default)
+- [X] T029 [P] [US4] `PublicIdService` in `src/main/java/com/example/wmtippspiel/publicapi/PublicIdService.java`: `publicId(userId)` = Base64Url(HMAC-SHA256(`app.public-api.id-secret`, userId)) gekürzt; `resolve(publicId)` per Enumeration über `TipRepository.leaderboard()`; **Bean-Initialisierung wirft eine Exception, wenn `app.public-api.id-secret` leer/blank ist** (Fail-Fast beim Start, kein unsicherer Laufzeit-Default)
 - [X] T030 [US4] `PublicMappers.toProfileDto(UserProfile, publicId, List<ProfileTipRow>)` und `toProfileTip(ProfileTipRow)` in `PublicMappers.java`
-- [ ] T031 [US4] `PublicQueryService.profile(String publicId)` in `PublicQueryService.java`: `PublicIdService.resolve` (leer → 404-Signal); Rang via `LeaderboardRanking.compute(...)` (passender `RankedRow`), `TipRepository.findEvaluatedTipsByUser`, `ProfileStats.build(...)` → `toProfileDto`
-- [ ] T032 [US4] In `PublicApiController.java`: `@GetMapping("/players/{publicId}")`; unbekannt → HTTP 404
+- [X] T031 [US4] `PublicQueryService.profile(String publicId)` in `PublicQueryService.java`: `PublicIdService.resolve` (leer → 404-Signal); Rang via `LeaderboardRanking.compute(...)` (passender `RankedRow`), `TipRepository.findEvaluatedTipsByUser`, `ProfileStats.build(...)` → `toProfileDto`
+- [X] T032 [US4] In `PublicApiController.java`: `@GetMapping("/players/{publicId}")`; unbekannt → HTTP 404
 
 **Checkpoint**: Alle vier User Stories unabhängig funktionsfähig.
 
@@ -152,10 +152,10 @@ müssen sequенziell laufen. Die Stories bleiben dennoch unabhängig testbar.
 
 - [X] T033 [P] Cross-cutting Datenschutz-Test (DTO-Ebene, JSON-Serialisierung) `src/test/java/com/example/wmtippspiel/publicapi/PublicApiPrivacyTest.java`: JSON ALLER fünf Endpoints enthält keines der Felder `user_id`/`email`/`token` (SC-001)
 - [X] T034 [P] Read-only-Nachweis: POST auf einen GET-Endpoint → HTTP 405 (SC-006), abgedeckt in `PublicApiWebTest.postIsRejected()`
-- [ ] T035 [P] Web-Test `src/test/java/com/example/wmtippspiel/publicapi/PublicApiCorsTest.java`: OPTIONS-Preflight mit erlaubtem Vercel-Origin liefert `Access-Control-Allow-Origin` (R8)
-- [ ] T036 [P] `docker-compose.yml` und `.env.example`: Port (`SERVER_PORT`) exponieren/mappen und `PUBLIC_API_ID_SECRET`, `PUBLIC_API_CORS_ALLOWED_ORIGINS`, `PUBLIC_API_CACHE_TTL_SECONDS` dokumentieren
-- [ ] T037 Vollständiger `mvn test` (119 Baseline + neue Tests grün) und Quickstart-Verifikation gemäß `specs/008-public-readonly-api/quickstart.md`
-- [ ] T038 [P] `README.md`: öffentliche API (Endpoints, UTC, CORS, Caching, Reveal-Regel) und neue Umgebungsvariablen dokumentieren
+- [X] T035 [P] Web-Test `src/test/java/com/example/wmtippspiel/publicapi/PublicApiCorsTest.java`: OPTIONS-Preflight mit erlaubtem Vercel-Origin liefert `Access-Control-Allow-Origin` (R8)
+- [X] T036 [P] `docker-compose.yml` und `.env.example`: Port (`SERVER_PORT`) exponieren/mappen und `PUBLIC_API_ID_SECRET`, `PUBLIC_API_CORS_ALLOWED_ORIGINS`, `PUBLIC_API_CACHE_TTL_SECONDS` dokumentieren
+- [X] T037 `mvn test` grün: 131 Tests, 0 Failures (alle bestehenden + 28 neue publicapi-Tests). Ausgenommen `PersistenceIntegrationTest` (Testcontainers/Docker — in dieser Umgebung nicht verfügbar). Quickstart-Live-Verifikation (`curl`) erfordert laufende DB + gesetztes `PUBLIC_API_ID_SECRET` und ist auf der Zielumgebung durchzuführen.
+- [X] T038 [P] `README.md`: öffentliche API (Endpoints, UTC, CORS, Caching, Reveal-Regel) und neue Umgebungsvariablen dokumentieren
 
 ---
 

@@ -39,6 +39,11 @@ class PublicApiWebTest {
     @MockBean
     private PublicQueryService query;
 
+    // PublicApiConfig wird als WebMvcConfigurer automatisch in den Slice gezogen
+    // und benötigt AppProperties (CORS/Cache); hier neutral gemockt.
+    @MockBean
+    private com.example.wmtippspiel.config.AppProperties properties;
+
     private static MatchDto match() {
         return new MatchDto(101L, "Deutschland", "Frankreich", Instant.parse("2026-06-20T19:00:00Z"),
                 "GROUP_STAGE", "A", "ARD", null, null, null, null, null, "SCHEDULED", 1);

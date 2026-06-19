@@ -42,6 +42,10 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/wmtippspiel
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-wmtippspiel}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-wmtippspiel}
+    # Feature 008: öffentliche Read-only-API (Servlet, Default-Port 8080).
+    # Hinter einem Reverse-Proxy (TLS) für die externe Website betreiben.
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
     restart: unless-stopped
 
 volumes:

@@ -6,6 +6,7 @@ import com.example.wmtippspiel.publicapi.dto.LeaderboardRowDto;
 import com.example.wmtippspiel.publicapi.dto.LiveMatchDto;
 import com.example.wmtippspiel.publicapi.dto.MatchDto;
 import com.example.wmtippspiel.publicapi.dto.MatchTipsDto;
+import com.example.wmtippspiel.publicapi.dto.ProfileDto;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -56,5 +57,14 @@ public class PublicApiController {
     @GetMapping("/matches/{matchId}/tips")
     public MatchTipsDto matchTips(@PathVariable long matchId) {
         return query.matchTips(matchId);
+    }
+
+    /**
+     * Öffentliches Spielerprofil über den stabilen, nicht-sensiblen Identifier
+     * (FR-015/016). Unbekannter Identifier → HTTP 404 (FR-019).
+     */
+    @GetMapping("/players/{publicId}")
+    public ProfileDto profile(@PathVariable String publicId) {
+        return query.profile(publicId);
     }
 }
