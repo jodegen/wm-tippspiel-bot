@@ -146,6 +146,38 @@ Filter-Select im Board-Channel.
 | Auswertung | minütlich | Beendete Spiele werten |
 | Board-Refresh | ~15 Min | Live-Board editieren |
 
+## Öffentliche Read-only-API (Feature 008)
+
+Für eine externe, öffentliche Website stellt der Bot eine **rein lesende**
+HTTP-API (Servlet/Tomcat, Default-Port `8080`) unter `/api/public/**` bereit —
+nur `GET`, ohne Authentifizierung, ohne Schreibpfade.
+
+| Endpoint | Zweck |
+|---|---|
+| `GET /api/public/schedule[?stage=&group=&matchday=]` | Spielplan (vollständig/gefiltert), Anstoß in UTC |
+| `GET /api/public/matches/live` | Aktuell laufende Spiele mit Stand |
+| `GET /api/public/leaderboard` | Rangliste (Punkte, exakte Treffer, Rang-Veränderung) |
+| `GET /api/public/matches/{matchId}/tips` | Tipps eines Spiels — **erst nach Anpfiff** (`kickoff` & `revealed`) |
+| `GET /api/public/players/{publicId}` | Spielerprofil über stabilen, nicht-sensiblen Identifier |
+
+Eigenschaften:
+
+- **Datenschutz**: Antworten enthalten nur unbedenkliche Felder (Anzeigename,
+  Spiel-/Statistikdaten). Keine Discord-`user_id`, E-Mail, Tokens oder interne
+  Schlüssel. Spieler werden über einen HMAC-abgeleiteten `publicId` adressiert.
+- **Reveal-Schutz**: Einzeltipps werden serverseitig erst freigegeben, wenn
+  `now() (UTC) ≥ kickoff` UND das Spiel `revealed` ist.
+- **Zeit**: Zeitpunkte in UTC (ISO-8601); Formatierung macht das Frontend.
+- **CORS/Caching**: Frontend und API laufen auf demselben vServer unter
+  getrennten (Sub-)Domains (z. B. `app.…` und `api.…`), daher CORS nur für die
+  konfigurierte Frontend-Origin; Spielplan/Leaderboard mit kurzer Cache-TTL.
+  Backend hinter einem Reverse-Proxy (TLS) betreiben; Port nur an `127.0.0.1`.
+
+Konfiguration (siehe `.env.example`): `SERVER_PORT`,
+`PUBLIC_API_CORS_ALLOWED_ORIGINS`, **`PUBLIC_API_ID_SECRET` (Pflicht — ohne Wert
+schlägt der Start fehl)**, `PUBLIC_API_CACHE_TTL_SECONDS`. Hinter einem
+Reverse-Proxy mit TLS betreiben.
+
 ## Betriebshinweise
 
 - Der Prozess muss durchlaufen (Gateway-Verbindung). JDA reconnectet automatisch;
