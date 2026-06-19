@@ -42,7 +42,7 @@ class PublicLeaderboardProfileConsistencyTest {
         when(tips.findEvaluatedTipsByUser(Mockito.anyString())).thenReturn(List.of());
 
         PublicIdService publicIds = new PublicIdService(new AppProperties(
-                null, null, null, null, null, new AppProperties.PublicApi(List.of(), "test-secret", 5)));
+                null, null, null, null, null, new AppProperties.PublicApi(List.of(), "test-secret", 5), null));
         PublicQueryService query = new PublicQueryService(matches, tips, snapshots, publicIds, Clock.systemUTC());
 
         List<LeaderboardRowDto> rows = query.leaderboard();

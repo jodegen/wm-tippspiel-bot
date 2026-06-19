@@ -18,7 +18,7 @@ class PublicIdServiceTest {
 
     private static PublicIdService withSecret(String secret) {
         return new PublicIdService(new AppProperties(
-                null, null, null, null, null, new AppProperties.PublicApi(List.of(), secret, 5)));
+                null, null, null, null, null, new AppProperties.PublicApi(List.of(), secret, 5), null));
     }
 
     @Test

@@ -40,7 +40,16 @@ ODDS_ENABLED=true|false   ODDS_API_KEY
 SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/wmtippspiel
 SPRING_DATASOURCE_USERNAME / SPRING_DATASOURCE_PASSWORD
 APP_TIMEZONE_DISPLAY=Europe/Berlin
+WEBSITE_BASE_URL=https://wm.xenoria.de
 ```
+
+`WEBSITE_BASE_URL` (Feature 009) ist die Basis-URL der öffentlichen Website. Ist sie
+gesetzt, ergänzen die Discord-Ausgaben dezente Hinweise/Links: der Footer des
+Leaderboard-Boards verweist auf `…/leaderboard`, `/rangliste` verlinkt dieselbe Tabelle
+und `/profil` verlinkt die Profilseite `…/profil/{publicId}` (derselbe öffentliche
+Identifier wie in der Public-API, keine Discord-ID). Leer/nicht gesetzt ⇒ die Ausgaben
+erscheinen unverändert ohne Hinweise. Bewusst getrennt von `PUBLIC_API_PUBLIC_BASE_URL`
+(API-Host).
 
 Optionale Mapping-Dateien im Classpath:
 - `tv-channels.yml` – TV-Sender je Match-ID

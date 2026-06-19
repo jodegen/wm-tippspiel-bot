@@ -42,7 +42,7 @@ class PublicApiCorsTest {
         @Bean
         AppProperties appProperties() {
             return new AppProperties(null, null, null, null, null,
-                    new AppProperties.PublicApi(List.of(ORIGIN), "secret", 5));
+                    new AppProperties.PublicApi(List.of(ORIGIN), "secret", 5), null);
         }
     }
 

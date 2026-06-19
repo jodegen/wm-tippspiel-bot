@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.example.wmtippspiel.discord.render.ProfilEmbed;
+import com.example.wmtippspiel.discord.render.WebsiteLinks;
 import com.example.wmtippspiel.leaderboard.LeaderboardRanking;
 import com.example.wmtippspiel.leaderboard.RankedRow;
 import com.example.wmtippspiel.persistence.ProfileTipRow;
@@ -29,10 +30,12 @@ public class ProfilCommand {
 
     private final TipRepository tips;
     private final ProfilEmbed embed;
+    private final WebsiteLinks websiteLinks;
 
-    public ProfilCommand(TipRepository tips, ProfilEmbed embed) {
+    public ProfilCommand(TipRepository tips, ProfilEmbed embed, WebsiteLinks websiteLinks) {
         this.tips = tips;
         this.embed = embed;
+        this.websiteLinks = websiteLinks;
     }
 
     public void handle(SlashCommandInteractionEvent event) {
@@ -51,6 +54,9 @@ public class ProfilCommand {
         List<ProfileTipRow> evaluatedTips = tips.findEvaluatedTipsByUser(target.getId());
 
         UserProfile profile = ProfileStats.build(target.getEffectiveName(), mine, evaluatedTips);
-        event.getHook().editOriginalEmbeds(embed.build(profile, target.getEffectiveAvatarUrl())).queue();
+        // Profil-URL zum angezeigten Ziel-Nutzer (publicId, nicht Discord-ID); null wenn unkonfiguriert.
+        String profileUrl = websiteLinks.profileUrl(target.getId()).orElse(null);
+        event.getHook().editOriginalEmbeds(
+                embed.build(profile, target.getEffectiveAvatarUrl(), profileUrl)).queue();
     }
 }
