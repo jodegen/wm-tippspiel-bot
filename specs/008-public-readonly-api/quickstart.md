@@ -19,6 +19,13 @@ Starten:
 mvn spring-boot:run        # Discord-Bot + HTTP-Server (Tomcat) im selben Prozess
 ```
 
+## API-Doku im Browser (Swagger-UI)
+
+```
+http://localhost:8080/swagger-ui.html      # interaktive Swagger-UI
+http://localhost:8080/v3/api-docs          # OpenAPI-Spezifikation (JSON)
+```
+
 ## Endpoints prüfen (alle GET, ohne Auth)
 
 ```bash

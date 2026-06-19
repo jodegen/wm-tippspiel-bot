@@ -2,6 +2,8 @@ package com.example.wmtippspiel.publicapi.dto;
 
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * Öffentliche Antwort des Tipps-pro-Spiel-Endpoints (Feature 008).
  * {@code released} ist nur {@code true}, wenn das Spiel angepfiffen ist
@@ -10,8 +12,9 @@ import java.util.List;
  */
 public record MatchTipsDto(
         long matchId,
-        boolean released,
-        List<PublicTipDto> tips) {
+        @Schema(description = "true nur, wenn das Spiel angepfiffen ist (now() ≥ kickoff UND revealed). "
+                + "Solange false, ist tips leer.") boolean released,
+        @Schema(description = "Abgegebene Tipps; leer, solange released=false") List<PublicTipDto> tips) {
 
     /** Reveal-gesperrte Antwort: keine Tipps preisgegeben. */
     public static MatchTipsDto locked(long matchId) {

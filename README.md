@@ -173,10 +173,21 @@ Eigenschaften:
   konfigurierte Frontend-Origin; Spielplan/Leaderboard mit kurzer Cache-TTL.
   Backend hinter einem Reverse-Proxy (TLS) betreiben; Port nur an `127.0.0.1`.
 
+**API-Doku (Swagger / OpenAPI)** — automatisch aus dem Code generiert (springdoc):
+
+- Swagger-UI: `GET /swagger-ui.html`
+- OpenAPI-Spezifikation (JSON): `GET /v3/api-docs`
+
 Konfiguration (siehe `.env.example`): `SERVER_PORT`,
 `PUBLIC_API_CORS_ALLOWED_ORIGINS`, **`PUBLIC_API_ID_SECRET` (Pflicht — ohne Wert
 schlägt der Start fehl)**, `PUBLIC_API_CACHE_TTL_SECONDS`. Hinter einem
 Reverse-Proxy mit TLS betreiben.
+
+> **Reverse-Proxy & Swagger**: Die Swagger-UI lädt zusätzlich Ressourcen unter
+> `/swagger-ui/**` und `/webjars/**`. Am einfachsten leitet der Proxy für die
+> API-(Sub-)Domain **alle** Pfade ans Backend. Wird nur `/api/public/**`
+> weitergeleitet, müssen `/swagger-ui/**`, `/v3/api-docs` und `/webjars/**`
+> zusätzlich geroutet werden, sonst bleibt die UI leer.
 
 ## Betriebshinweise
 

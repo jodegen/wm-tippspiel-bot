@@ -65,6 +65,13 @@ app:
     base-url: ${ODDS_BASE_URL:https://api.the-odds-api.com/v4}
     api-key: ${ODDS_API_KEY:}
 
+# OpenAPI/Swagger (Feature 008) — nur die öffentlichen Endpoints dokumentieren.
+springdoc:
+  paths-to-match: /api/public/**
+  swagger-ui:
+    operations-sorter: alpha
+    tags-sorter: alpha
+
 logging:
   level:
     com.example.wmtippspiel: INFO
