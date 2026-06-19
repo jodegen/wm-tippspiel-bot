@@ -165,6 +165,9 @@ public class MatchRepository {
      * damit die Presence den aktuellen Stand aus der DB lesen kann. Nutzt
      * ausschließlich vorhandene Spalten (kein Schema-Eingriff) und berührt
      * {@code revealed}/{@code evaluated}/{@code channel}/{@code odds_*} nicht.
+     * Auch {@code winner} (F010) bleibt unberührt: der maßgebliche Sieger wird
+     * vom Voll-Sync ({@link #upsert}) aus {@code score.winner} geschrieben; ein
+     * transientes Live-Update darf einen bekannten Sieger nicht überschreiben.
      */
     public void updateLiveScore(long id, Integer home, Integer away, MatchStatus status) {
         jdbc.sql("UPDATE matches SET home_score = :h, away_score = :a, status = :status WHERE id = :id")
@@ -181,9 +184,9 @@ public class MatchRepository {
     public void upsert(Match m) {
         jdbc.sql("""
                         INSERT INTO matches
-                            (id, home, away, kickoff, stage, group_label, channel, home_score, away_score, status, matchday)
+                            (id, home, away, kickoff, stage, group_label, channel, home_score, away_score, status, matchday, winner)
                         VALUES
-                            (:id, :home, :away, :kickoff, :stage, :groupLabel, :channel, :homeScore, :awayScore, :status, :matchday)
+                            (:id, :home, :away, :kickoff, :stage, :groupLabel, :channel, :homeScore, :awayScore, :status, :matchday, :winner)
                         ON CONFLICT (id) DO UPDATE SET
                             home = EXCLUDED.home,
                             away = EXCLUDED.away,
@@ -198,6 +201,9 @@ public class MatchRepository {
                             -- echte Stand eine Schein-Neubewertung aus, FR-017a).
                             home_score = COALESCE(EXCLUDED.home_score, matches.home_score),
                             away_score = COALESCE(EXCLUDED.away_score, matches.away_score),
+                            -- Sieger (F010) additiv: ein bekannter Sieger wird nicht durch
+                            -- ein transientes null überschrieben.
+                            winner = COALESCE(EXCLUDED.winner, matches.winner),
                             -- Ein beendetes Spiel nicht durch Status-Geflacker der API
                             -- zurückstufen (verhindert erneutes Reveal/„kommend"/„live").
                             status = CASE
@@ -215,6 +221,7 @@ public class MatchRepository {
                 .param("awayScore", m.awayScore())
                 .param("status", m.status().name())
                 .param("matchday", m.matchday())
+                .param("winner", m.winner() == null ? null : m.winner().name())
                 .update();
     }
 
@@ -256,6 +263,9 @@ public class MatchRepository {
         OffsetDateTime kickoff = rs.getObject("kickoff", OffsetDateTime.class);
         Integer homeScore = (Integer) rs.getObject("home_score");
         Integer awayScore = (Integer) rs.getObject("away_score");
+        String winnerRaw = rs.getString("winner");
+        com.example.wmtippspiel.domain.model.MatchWinner winner =
+                winnerRaw == null ? null : com.example.wmtippspiel.domain.model.MatchWinner.valueOf(winnerRaw);
         return new Match(
                 rs.getLong("id"),
                 rs.getString("home"),
@@ -272,6 +282,7 @@ public class MatchRepository {
                 MatchStatus.valueOf(rs.getString("status")),
                 rs.getBoolean("revealed"),
                 rs.getBoolean("evaluated"),
-                (Integer) rs.getObject("matchday"));
+                (Integer) rs.getObject("matchday"),
+                winner);
     }
 }

@@ -1,8 +1,9 @@
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/009-website-hints/plan.md` (aktuelles Feature — Website-Hinweise in Discord-Ausgaben: Board-Footer-Hinweis, klickbare Links in /profil & /rangliste; Website-Basis-URL `app.website.base-url`; publicId aus F008 wiederverwendet, rein additive Ausgabe-/Konfig-Änderung, keine Persistenz/Schema).
-Vorheriges Feature: `specs/008-public-readonly-api/plan.md` (öffentliche, rein lesende REST-API `/api/public/**`; HMAC-Profil-Identifier ohne Schema-Änderung, Reveal-Gate).
+`specs/010-public-bracket-endpoint/plan.md` (aktuelles Feature — öffentlicher K.o.-Bracket-Endpoint `GET /api/public/bracket`: feste FIFA-Topologie Match 73–104 statisch im Code (`publicapi.bracket.BracketTopology`), Slot-Mapping per kickoff+id → FIFA-Match-Nr, Gewinner-Fortschritt zur Laufzeit (nicht persistiert). Zwei additive Änderungen: `Stage.LAST_32` ergänzen (fehlte; `mapStage` fiel still auf GROUP_STAGE) und nullable Spalte `matches.winner` aus football-data `score.winner` via Changeset 013 für Elfmeter/Verlängerung. CORS/DTO-Konventionen aus F008 wiederverwendet).
+Vorheriges Feature: `specs/009-website-hints/plan.md` (Website-Hinweise in Discord-Ausgaben: Board-Footer-Hinweis, klickbare Links in /profil & /rangliste; Website-Basis-URL `app.website.base-url`; publicId aus F008 wiederverwendet, rein additive Ausgabe-/Konfig-Änderung, keine Persistenz/Schema).
+Weiteres: `specs/008-public-readonly-api/plan.md` (öffentliche, rein lesende REST-API `/api/public/**`; HMAC-Profil-Identifier ohne Schema-Änderung, Reveal-Gate).
 Weiteres: `specs/007-leaderboard-recap-profile/plan.md` (F11 Live-Leaderboard-Board, F12 Spieltags-Rückblick, F13 /profil).
 Weiteres: `specs/006-check24-scoring/plan.md` (CHECK24-Punkteschema 4/3/2/0).
 Weitere: `specs/004-dynamic-bot-presence/plan.md` (F9), `specs/003-consolidated-board/plan.md` (F7), `specs/002-live-goal-notifications/plan.md` (F8).

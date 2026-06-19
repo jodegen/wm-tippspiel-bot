@@ -37,6 +37,9 @@ class PublicApiCorsTest {
     @MockBean
     private PublicQueryService query;
 
+    @MockBean
+    private com.example.wmtippspiel.publicapi.bracket.BracketService bracket;
+
     @TestConfiguration
     static class Props {
         @Bean

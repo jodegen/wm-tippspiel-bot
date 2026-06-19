@@ -35,6 +35,9 @@ class PublicMatchTipsWebTest {
     private PublicQueryService query;
 
     @MockBean
+    private com.example.wmtippspiel.publicapi.bracket.BracketService bracket;
+
+    @MockBean
     private com.example.wmtippspiel.config.AppProperties properties;
 
     @Test

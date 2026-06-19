@@ -39,6 +39,9 @@ class PublicApiWebTest {
     @MockBean
     private PublicQueryService query;
 
+    @MockBean
+    private com.example.wmtippspiel.publicapi.bracket.BracketService bracket;
+
     // PublicApiConfig wird als WebMvcConfigurer automatisch in den Slice gezogen
     // und benötigt AppProperties (CORS/Cache); hier neutral gemockt.
     @MockBean
@@ -102,6 +105,25 @@ class PublicApiWebTest {
                 .andExpect(jsonPath("$[0].displayName").value("Alice"))
                 .andExpect(jsonPath("$[0].rankChange").value("↑1"))
                 .andExpect(jsonPath("$[0].publicId").value("pub-abc123"))
+                .andExpect(content().string(not(containsString("user_id"))));
+    }
+
+    @Test
+    @DisplayName("GET /bracket liefert Runden mit Spielen/Platzhaltern (F010)")
+    void bracketReturnsRounds() throws Exception {
+        var home = com.example.wmtippspiel.publicapi.dto.BracketParticipantDto.placeholderOf("Sieger Gruppe A");
+        var away = com.example.wmtippspiel.publicapi.dto.BracketParticipantDto.placeholderOf("Zweiter Gruppe B");
+        var m73 = new com.example.wmtippspiel.publicapi.dto.BracketMatchDto(
+                73, null, home, away, null, null, null, null, List.of(), 90);
+        var round = new com.example.wmtippspiel.publicapi.dto.BracketRoundDto("LAST_32", "Sechzehntelfinale", List.of(m73));
+        when(bracket.build()).thenReturn(new com.example.wmtippspiel.publicapi.dto.BracketDto(List.of(round)));
+
+        mvc.perform(get("/api/public/bracket"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.rounds[0].stage").value("LAST_32"))
+                .andExpect(jsonPath("$.rounds[0].matches[0].fifaMatchNo").value(73))
+                .andExpect(jsonPath("$.rounds[0].matches[0].home.placeholder").value("Sieger Gruppe A"))
+                .andExpect(jsonPath("$.rounds[0].matches[0].nextMatchNo").value(90))
                 .andExpect(content().string(not(containsString("user_id"))));
     }
 

@@ -2,6 +2,8 @@ package com.example.wmtippspiel.publicapi;
 
 import java.util.List;
 
+import com.example.wmtippspiel.publicapi.bracket.BracketService;
+import com.example.wmtippspiel.publicapi.dto.BracketDto;
 import com.example.wmtippspiel.publicapi.dto.LeaderboardRowDto;
 import com.example.wmtippspiel.publicapi.dto.LiveMatchDto;
 import com.example.wmtippspiel.publicapi.dto.MatchDto;
@@ -31,9 +33,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class PublicApiController {
 
     private final PublicQueryService query;
+    private final BracketService bracket;
 
-    public PublicApiController(PublicQueryService query) {
+    public PublicApiController(PublicQueryService query, BracketService bracket) {
         this.query = query;
+        this.bracket = bracket;
     }
 
     @GetMapping("/schedule")
@@ -58,6 +62,14 @@ public class PublicApiController {
             description = "Vollständige Rangliste mit Punkten, exakten Treffern und Rang-Veränderung.")
     public List<LeaderboardRowDto> leaderboard() {
         return query.leaderboard();
+    }
+
+    @GetMapping("/bracket")
+    @Operation(summary = "K.o.-Turnierbaum (Bracket)",
+            description = "Kompletter K.o.-Baum (6 Runden) mit Teams/Platzhaltern, Ergebnis, Status, "
+                    + "FIFA-Match-Nr und Kanten. Gewinner rücken zur Laufzeit nach (nicht persistiert).")
+    public BracketDto bracket() {
+        return bracket.build();
     }
 
     @GetMapping("/matches/{matchId}/tips")
