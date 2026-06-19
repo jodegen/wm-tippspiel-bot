@@ -46,8 +46,16 @@ public class LeaderboardBoardEmbed {
         // da er nicht von Tipp-Daten abhängt. Footer ist reiner Text (nicht klickbar).
         websiteLinks.footerHint().ifPresent(hint ->
                 embed.setFooter(EmbedStyle.FOOTER_BASE + " · " + hint));
+
+        // Klickbare Link-Zeile zur vollständigen Web-Tabelle (Feature 009), analog zu
+        // /rangliste – leer, wenn keine Basis-URL konfiguriert ist. Wird stets ans Ende
+        // der Beschreibung gehängt (auch im Leer-Board-Fall).
+        String linkLine = websiteLinks.leaderboardUrl()
+                .map(url -> "\n🔗 [Vollständige Tabelle ansehen](" + url + ")")
+                .orElse("");
+
         if (rows.isEmpty()) {
-            embed.setDescription("Noch keine Tipps gewertet. 🏁");
+            embed.setDescription("Noch keine Tipps gewertet. 🏁" + linkLine);
             return embed.build();
         }
         StringBuilder sb = new StringBuilder();
@@ -57,12 +65,15 @@ public class LeaderboardBoardEmbed {
                 break;
             }
             String line = line(r);
-            if (sb.length() + line.length() > SAFE_DESC_LIMIT) {
+            // Platz für die abschließende Link-Zeile reservieren, damit sie nicht
+            // durch die Truncation verloren geht.
+            if (sb.length() + line.length() + linkLine.length() > SAFE_DESC_LIMIT) {
                 break;
             }
             sb.append(line);
             shown++;
         }
+        sb.append(linkLine);
         embed.setDescription(sb.toString());
         return embed.build();
     }

@@ -88,6 +88,41 @@ class LeaderboardBoardEmbedTest {
         assertThat(footer).isEqualTo(EmbedStyle.FOOTER_BASE);
     }
 
+    @Test
+    @DisplayName("Klickbarer Web-Link in der Beschreibung bei konfigurierter Basis-URL (auch leeres Board)")
+    void clickableLinkWhenConfigured() {
+        LeaderboardBoardEmbed configured = embedWith("https://wm.xenoria.de");
+        String expected = "🔗 [Vollständige Tabelle ansehen](https://wm.xenoria.de/leaderboard)";
+
+        assertThat(configured.build(rows(3), 15).getDescription()).contains(expected);
+        assertThat(configured.build(List.of(), 15).getDescription()).contains(expected);
+    }
+
+    @Test
+    @DisplayName("Ohne Basis-URL erscheint kein Link in der Beschreibung (FR-006)")
+    void noLinkWhenNotConfigured() {
+        assertThat(embed.build(rows(3), 15).getDescription()).doesNotContain("🔗");
+    }
+
+    @Test
+    @DisplayName("Link bleibt trotz Truncation erhalten und Beschreibung unter dem Hardlimit")
+    void linkSurvivesTruncation() {
+        LeaderboardBoardEmbed configured = embedWith("https://wm.xenoria.de");
+        List<LeaderboardEntry> entries = new ArrayList<>();
+        String longName = "X".repeat(200);
+        for (int i = 0; i < 500; i++) {
+            entries.add(new LeaderboardEntry("u" + i, longName + i, 500 - i, 0, 0));
+        }
+        List<RankedRow> rows = LeaderboardRanking.compute(entries, Map.of());
+
+        MessageEmbed result = configured.build(rows, 1000);
+
+        assertThat(result.getDescription())
+                .contains("🔗 [Vollständige Tabelle ansehen](https://wm.xenoria.de/leaderboard)");
+        assertThat(result.getDescription().length())
+                .isLessThanOrEqualTo(MessageEmbed.DESCRIPTION_MAX_LENGTH);
+    }
+
     private static List<RankedRow> rows(int n) {
         List<LeaderboardEntry> entries = new ArrayList<>();
         for (int i = 0; i < n; i++) {
