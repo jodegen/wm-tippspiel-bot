@@ -49,8 +49,8 @@ müssen sequенziell laufen. Die Stories bleiben dennoch unabhängig testbar.
 - [X] T004 Regressionsschutz: Verifiziert, dass KEIN Test `@SpringBootTest` nutzt (alle 22 Testklassen sind reine JUnit/Testcontainers ohne Spring-Context) — die Umstellung auf `web-application-type: servlet` startet daher in keinem bestehenden Test einen Tomcat; kein Code-Eingriff nötig. (Hinweis: Testcontainers-Tests erfordern Docker, hier nicht ausführbar — vorbestehend, unabhängig von Feature 008.)
 - [ ] T005 [P] `PublicApiConfig` in `src/main/java/com/example/wmtippspiel/publicapi/PublicApiConfig.java`: `@Configuration @EnableCaching`, CORS für `/api/public/**` aus `app.public-api.cors-allowed-origins` (Methoden `GET, OPTIONS`, keine Credentials) via `WebMvcConfigurer#addCorsMappings`, Caffeine-`CacheManager` mit TTL aus `app.public-api.cache-ttl-seconds` (Caches `schedule`, `leaderboard`)
 - [X] T006 [P] `PublicMappers` in `src/main/java/com/example/wmtippspiel/publicapi/PublicMappers.java`: finale Klasse mit privatem Konstruktor, statische Mapping-Methoden werden je Story ergänzt
-- [ ] T007 [P] `PublicQueryService` (Skelett) in `src/main/java/com/example/wmtippspiel/publicapi/PublicQueryService.java`: `@Service`, Konstruktor-Injektion von `MatchRepository`, `TipRepository`, `LeaderboardSnapshotRepository` und `java.time.Clock` (für deterministisches Reveal-Gating); Methoden je Story ergänzt
-- [ ] T008 [P] `PublicApiController` (Skelett) in `src/main/java/com/example/wmtippspiel/publicapi/PublicApiController.java`: `@RestController @RequestMapping("/api/public")`, Konstruktor-Injektion von `PublicQueryService` (und später `PublicIdService`); nur `@GetMapping`-Methoden werden ergänzt (keine Schreibpfade)
+- [X] T007 [P] `PublicQueryService` in `src/main/java/com/example/wmtippspiel/publicapi/PublicQueryService.java`: `@Service`, Konstruktor-Injektion von `MatchRepository`, `TipRepository`, `LeaderboardSnapshotRepository` und `java.time.Clock` (für deterministisches Reveal-Gating); Methoden je Story ergänzt
+- [X] T008 [P] `PublicApiController` in `src/main/java/com/example/wmtippspiel/publicapi/PublicApiController.java`: `@RestController @RequestMapping("/api/public")`, Konstruktor-Injektion von `PublicQueryService` (und später `PublicIdService`); nur `@GetMapping`-Methoden werden ergänzt (keine Schreibpfade)
 
 **Checkpoint**: Web-Server startet, CORS/Cache konfiguriert, Baseline-Tests grün — Story-Implementierung kann beginnen.
 
@@ -64,15 +64,15 @@ müssen sequенziell laufen. Die Stories bleiben dennoch unabhängig testbar.
 
 ### Tests for User Story 1
 
-- [ ] T009 [P] [US1] Web-Test `src/test/java/com/example/wmtippspiel/publicapi/PublicScheduleWebTest.java` (MockMvc, `@SpringBootTest(webEnvironment=MOCK)` + Testcontainers-PostgreSQL): Spielplan vollständig & gefiltert (stage/group/matchday), Live nur `IN_PLAY`, leere Mengen → leere Liste, JSON ohne `user_id`; assert `kickoffUtc` als UTC-ISO-8601 (`…Z`) serialisiert (FR-005)
+- [X] T009 [P] [US1] Web-Test `src/test/java/com/example/wmtippspiel/publicapi/PublicScheduleWebTest.java` (MockMvc, `@SpringBootTest(webEnvironment=MOCK)` + Testcontainers-PostgreSQL): Spielplan vollständig & gefiltert (stage/group/matchday), Live nur `IN_PLAY`, leere Mengen → leere Liste, JSON ohne `user_id`; assert `kickoffUtc` als UTC-ISO-8601 (`…Z`) serialisiert (FR-005)
 
 ### Implementation for User Story 1
 
 - [X] T010 [P] [US1] Read-only `MatchRepository.findAll()` (alle Spiele exkl. `CANCELLED`, sortiert nach `kickoff`) additiv in `src/main/java/com/example/wmtippspiel/persistence/MatchRepository.java`
 - [X] T011 [P] [US1] Records `MatchDto` und `LiveMatchDto` in `src/main/java/com/example/wmtippspiel/publicapi/dto/` gemäß data-model.md (UTC-`Instant`, keine internen IDs außer Fixture-`matchId`)
 - [X] T012 [US1] `PublicMappers.toMatchDto(Match)` und `toLiveMatchDto(Match)` in `PublicMappers.java` ergänzen (kein `user_id`/intern; null-sichere Quote/Ergebnis)
-- [ ] T013 [US1] `PublicQueryService.schedule(String stage, String group, Integer matchday)` (`@Cacheable("schedule")`, In-Memory-Filter über `findAll()`) und `liveMatches()` (über `MatchRepository.findInPlay()`) in `PublicQueryService.java`
-- [ ] T014 [US1] In `PublicApiController.java`: `@GetMapping("/schedule")` (mit `@RequestParam(required=false)` stage/group/matchday) und `@GetMapping("/matches/live")`
+- [X] T013 [US1] `PublicQueryService.schedule(String stage, String group, Integer matchday)` (`@Cacheable("schedule")`, In-Memory-Filter über `findAll()`) und `liveMatches()` (über `MatchRepository.findInPlay()`) in `PublicQueryService.java`
+- [X] T014 [US1] In `PublicApiController.java`: `@GetMapping("/schedule")` (mit `@RequestParam(required=false)` stage/group/matchday) und `@GetMapping("/matches/live")`
 
 **Checkpoint**: US1 eigenständig funktionsfähig und testbar (MVP).
 
@@ -86,14 +86,14 @@ müssen sequенziell laufen. Die Stories bleiben dennoch unabhängig testbar.
 
 ### Tests for User Story 2
 
-- [ ] T015 [P] [US2] Web-Test `src/test/java/com/example/wmtippspiel/publicapi/PublicLeaderboardWebTest.java`: Rangliste vorhanden & sortiert, `rankChange` gesetzt, JSON ohne `user_id`/`email`/`token` (SC-001), exakte Treffer entkoppelt vom Punktwert (FR-010)
+- [X] T015 [P] [US2] Web-Test `src/test/java/com/example/wmtippspiel/publicapi/PublicLeaderboardWebTest.java`: Rangliste vorhanden & sortiert, `rankChange` gesetzt, JSON ohne `user_id`/`email`/`token` (SC-001), exakte Treffer entkoppelt vom Punktwert (FR-010)
 
 ### Implementation for User Story 2
 
 - [X] T016 [P] [US2] Record `LeaderboardRowDto` in `src/main/java/com/example/wmtippspiel/publicapi/dto/LeaderboardRowDto.java` (rank, displayName, points, exactHits, rankChange)
 - [X] T017 [US2] `PublicMappers.toLeaderboardRow(RankedRow)` in `PublicMappers.java` (rankChange via `RankDelta.symbol()`, displayName aus `LeaderboardEntry.username`)
-- [ ] T018 [US2] `PublicQueryService.leaderboard()` (`@Cacheable("leaderboard")`) in `PublicQueryService.java`: `TipRepository.leaderboard()` → `LeaderboardRanking.compute(entries, LeaderboardSnapshotRepository.findAllRanks())` → Map auf `LeaderboardRowDto` (KEIN `replaceAll`-Aufruf, nur lesend)
-- [ ] T019 [US2] In `PublicApiController.java`: `@GetMapping("/leaderboard")`
+- [X] T018 [US2] `PublicQueryService.leaderboard()` (`@Cacheable("leaderboard")`) in `PublicQueryService.java`: `TipRepository.leaderboard()` → `LeaderboardRanking.compute(entries, LeaderboardSnapshotRepository.findAllRanks())` → Map auf `LeaderboardRowDto` (KEIN `replaceAll`-Aufruf, nur lesend)
+- [X] T019 [US2] In `PublicApiController.java`: `@GetMapping("/leaderboard")`
 
 **Checkpoint**: US1 und US2 unabhängig funktionsfähig.
 
@@ -151,7 +151,7 @@ müssen sequенziell laufen. Die Stories bleiben dennoch unabhängig testbar.
 **Purpose**: Querschnittliche Sicherheits-/Betriebsnachweise und Doku.
 
 - [X] T033 [P] Cross-cutting Datenschutz-Test (DTO-Ebene, JSON-Serialisierung) `src/test/java/com/example/wmtippspiel/publicapi/PublicApiPrivacyTest.java`: JSON ALLER fünf Endpoints enthält keines der Felder `user_id`/`email`/`token` (SC-001)
-- [ ] T034 [P] Web-Test `src/test/java/com/example/wmtippspiel/publicapi/PublicApiReadOnlyTest.java`: POST/PUT/DELETE auf `/api/public/**` → HTTP 405 (SC-006)
+- [X] T034 [P] Read-only-Nachweis: POST auf einen GET-Endpoint → HTTP 405 (SC-006), abgedeckt in `PublicApiWebTest.postIsRejected()`
 - [ ] T035 [P] Web-Test `src/test/java/com/example/wmtippspiel/publicapi/PublicApiCorsTest.java`: OPTIONS-Preflight mit erlaubtem Vercel-Origin liefert `Access-Control-Allow-Origin` (R8)
 - [ ] T036 [P] `docker-compose.yml` und `.env.example`: Port (`SERVER_PORT`) exponieren/mappen und `PUBLIC_API_ID_SECRET`, `PUBLIC_API_CORS_ALLOWED_ORIGINS`, `PUBLIC_API_CACHE_TTL_SECONDS` dokumentieren
 - [ ] T037 Vollständiger `mvn test` (119 Baseline + neue Tests grün) und Quickstart-Verifikation gemäß `specs/008-public-readonly-api/quickstart.md`
