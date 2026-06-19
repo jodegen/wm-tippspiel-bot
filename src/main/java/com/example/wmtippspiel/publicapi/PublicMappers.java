@@ -58,13 +58,19 @@ public final class PublicMappers {
                 m.matchday());
     }
 
-    public static LeaderboardRowDto toLeaderboardRow(RankedRow r) {
+    /**
+     * @param publicId der stabile öffentliche Identifier des Teilnehmers
+     *                 (HMAC, über {@link PublicIdService} abgeleitet — hier nur
+     *                 durchgereicht, nicht neu berechnet) für die Profil-Verlinkung.
+     */
+    public static LeaderboardRowDto toLeaderboardRow(RankedRow r, String publicId) {
         return new LeaderboardRowDto(
                 r.rank(),
                 r.entry().username(),
                 r.entry().totalPoints(),
                 r.entry().exactHits(),
-                r.delta().symbol());
+                r.delta().symbol(),
+                publicId);
     }
 
     /**

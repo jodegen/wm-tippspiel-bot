@@ -95,12 +95,13 @@ class PublicApiWebTest {
     @Test
     @DisplayName("GET /leaderboard liefert Rang-Zeilen ohne user_id")
     void leaderboardReturnsRows() throws Exception {
-        when(query.leaderboard()).thenReturn(List.of(new LeaderboardRowDto(1, "Alice", 12, 2, "↑1")));
+        when(query.leaderboard()).thenReturn(List.of(new LeaderboardRowDto(1, "Alice", 12, 2, "↑1", "pub-abc123")));
         mvc.perform(get("/api/public/leaderboard"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].rank").value(1))
                 .andExpect(jsonPath("$[0].displayName").value("Alice"))
                 .andExpect(jsonPath("$[0].rankChange").value("↑1"))
+                .andExpect(jsonPath("$[0].publicId").value("pub-abc123"))
                 .andExpect(content().string(not(containsString("user_id"))));
     }
 

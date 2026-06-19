@@ -62,7 +62,7 @@ class PublicMappersTest {
     void leaderboardRowIsClean() throws Exception {
         LeaderboardEntry entry = new LeaderboardEntry("discord-123456", "Alice", 12, 5, 2);
         List<RankedRow> ranked = LeaderboardRanking.compute(List.of(entry), java.util.Map.of());
-        String serialized = json(PublicMappers.toLeaderboardRow(ranked.get(0)));
+        String serialized = json(PublicMappers.toLeaderboardRow(ranked.get(0), "pub-abc"));
         assertNoForbidden(serialized);
         assertThat(serialized).contains("alice");
     }

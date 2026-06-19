@@ -105,7 +105,8 @@ components:
         points:      { type: integer }
         exactHits:   { type: integer }
         rankChange:  { type: string, description: "NEU / ↑n / ↓n / –" }
-      required: [rank, displayName, points, exactHits, rankChange]
+        publicId:    { type: string, description: "Stabiler, nicht zurückrechenbarer HMAC-Identifier; identisch zum Pfadparameter von GET /players/{publicId} (NICHT die Discord-ID)" }
+      required: [rank, displayName, points, exactHits, rankChange, publicId]
     MatchTips:
       type: object
       properties:

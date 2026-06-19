@@ -70,7 +70,9 @@ public class PublicQueryService {
         List<LeaderboardEntry> entries = tips.leaderboard();
         Map<String, Integer> previousRanks = snapshots.findAllRanks();
         List<RankedRow> ranked = LeaderboardRanking.compute(entries, previousRanks);
-        return ranked.stream().map(PublicMappers::toLeaderboardRow).toList();
+        return ranked.stream()
+                .map(r -> PublicMappers.toLeaderboardRow(r, publicIds.publicId(r.entry().userId())))
+                .toList();
     }
 
     /**

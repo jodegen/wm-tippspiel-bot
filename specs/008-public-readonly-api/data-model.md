@@ -58,6 +58,7 @@ aus `home_score/away_score` (von F9 live gepflegt).
 | points | int | `LeaderboardEntry.totalPoints` |
 | exactHits | int | `LeaderboardEntry.exactHits` (direkter Ergebnisvergleich, FR-010) |
 | rankChange | String | `RankDelta.symbol()` — `NEU` / `↑n` / `↓n` / `–` |
+| publicId | String | `PublicIdService.publicId(userId)` — selbe HMAC-Ableitung wie `/players/{publicId}` (Verlinkung aufs Profil) |
 
 ### MatchTipsDto (reveal-gegated)
 
