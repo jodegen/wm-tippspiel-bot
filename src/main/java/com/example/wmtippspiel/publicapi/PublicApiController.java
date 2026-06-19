@@ -5,8 +5,10 @@ import java.util.List;
 import com.example.wmtippspiel.publicapi.dto.LeaderboardRowDto;
 import com.example.wmtippspiel.publicapi.dto.LiveMatchDto;
 import com.example.wmtippspiel.publicapi.dto.MatchDto;
+import com.example.wmtippspiel.publicapi.dto.MatchTipsDto;
 
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -44,5 +46,15 @@ public class PublicApiController {
     @GetMapping("/leaderboard")
     public List<LeaderboardRowDto> leaderboard() {
         return query.leaderboard();
+    }
+
+    /**
+     * Tipps eines Spiels — die serverseitige Anpfiff-Prüfung erfolgt im Service
+     * (FR-012/013); vor Anpfiff enthält die Antwort keine Einzeltipps. Unbekanntes
+     * Spiel → HTTP 404 (FR-019).
+     */
+    @GetMapping("/matches/{matchId}/tips")
+    public MatchTipsDto matchTips(@PathVariable long matchId) {
+        return query.matchTips(matchId);
     }
 }

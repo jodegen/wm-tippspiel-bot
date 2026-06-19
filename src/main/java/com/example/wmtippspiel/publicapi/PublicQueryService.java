@@ -10,9 +10,12 @@ import com.example.wmtippspiel.persistence.LeaderboardEntry;
 import com.example.wmtippspiel.persistence.LeaderboardSnapshotRepository;
 import com.example.wmtippspiel.persistence.MatchRepository;
 import com.example.wmtippspiel.persistence.TipRepository;
+import com.example.wmtippspiel.domain.model.Match;
 import com.example.wmtippspiel.publicapi.dto.LeaderboardRowDto;
 import com.example.wmtippspiel.publicapi.dto.LiveMatchDto;
 import com.example.wmtippspiel.publicapi.dto.MatchDto;
+import com.example.wmtippspiel.publicapi.dto.MatchTipsDto;
+import com.example.wmtippspiel.publicapi.dto.PublicTipDto;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -62,5 +65,25 @@ public class PublicQueryService {
         Map<String, Integer> previousRanks = snapshots.findAllRanks();
         List<RankedRow> ranked = LeaderboardRanking.compute(entries, previousRanks);
         return ranked.stream().map(PublicMappers::toLeaderboardRow).toList();
+    }
+
+    /**
+     * Tipps eines Spiels — NUR nach Anpfiff (FR-012/013). Serverseitiges,
+     * konservatives Gate: {@code now() (UTC) ≥ kickoff} UND {@code revealed}.
+     * Ist das Gate nicht erfüllt, werden die Tipps GAR NICHT geladen und eine
+     * reveal-gesperrte Antwort zurückgegeben — kein versteckter Leak im JSON.
+     *
+     * @throws PublicNotFoundException wenn das Spiel unbekannt ist (FR-019)
+     */
+    public MatchTipsDto matchTips(long matchId) {
+        Match match = matches.findById(matchId).orElseThrow(PublicNotFoundException::new);
+        boolean kickoffReached = !match.kickoff().isAfter(clock.instant());
+        if (!kickoffReached || !match.revealed()) {
+            return MatchTipsDto.locked(matchId);
+        }
+        List<PublicTipDto> released = tips.findByMatch(matchId).stream()
+                .map(t -> PublicMappers.toPublicTip(t, match.evaluated()))
+                .toList();
+        return new MatchTipsDto(matchId, true, released);
     }
 }

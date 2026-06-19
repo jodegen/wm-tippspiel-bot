@@ -109,15 +109,15 @@ müssen sequенziell laufen. Die Stories bleiben dennoch unabhängig testbar.
 
 > **Zuerst schreiben und FEHLSCHLAGEN lassen, bevor T022–T024 implementiert werden.**
 
-- [ ] T020 [P] [US3] `RevealGateTest` in `src/test/java/com/example/wmtippspiel/publicapi/RevealGateTest.java`: mit fixer `Clock` — (a) `now()<kickoff` → `released=false`, leere Tipps; (b) `now()≥kickoff` aber `revealed=false` → `released=false`; (c) beide erfüllt → Tipps vorhanden; assert: kein `username`/Ergebnis im DTO bei `released=false`
+- [X] T020 [P] [US3] `RevealGateTest` in `src/test/java/com/example/wmtippspiel/publicapi/RevealGateTest.java`: mit fixer `Clock` — (a) `now()<kickoff` → `released=false`, leere Tipps; (b) `now()≥kickoff` aber `revealed=false` → `released=false`; (c) beide erfüllt → Tipps vorhanden; assert: kein `username`/Ergebnis im DTO bei `released=false`
 
 ### Implementation for User Story 3
 
 - [X] T021 [P] [US3] Records `PublicTipDto` und `MatchTipsDto` in `src/main/java/com/example/wmtippspiel/publicapi/dto/` (data-model.md)
 - [X] T022 [US3] `PublicMappers.toPublicTip(Tip, boolean evaluated)` in `PublicMappers.java` (displayName, tipHome/away, points nur bei gewertetem Spiel)
-- [ ] T023 [US3] `PublicQueryService.matchTips(long matchId)` in `PublicQueryService.java`: `MatchRepository.findById` (leer → Signal für 404); Gate `!clock.kickoffReached || !match.revealed()` ⇒ `MatchTipsDto(matchId, released=false, [])` OHNE Laden der Tipps; sonst `TipRepository.findByMatch` → Mapping (nicht gecacht)
-- [ ] T024 [US3] In `PublicApiController.java`: `@GetMapping("/matches/{matchId}/tips")`; unbekanntes Spiel → HTTP 404 ohne interne Details
-- [ ] T025 [P] [US3] Web-Test `src/test/java/com/example/wmtippspiel/publicapi/PublicMatchTipsWebTest.java`: Vor-Anpfiff-JSON enthält keinerlei fremde Tipps (SC-002), Nach-Anpfiff liefert Tipps, unbekannte `matchId` → 404
+- [X] T023 [US3] `PublicQueryService.matchTips(long matchId)` in `PublicQueryService.java`: `MatchRepository.findById` (leer → Signal für 404); Gate `!clock.kickoffReached || !match.revealed()` ⇒ `MatchTipsDto(matchId, released=false, [])` OHNE Laden der Tipps; sonst `TipRepository.findByMatch` → Mapping (nicht gecacht)
+- [X] T024 [US3] In `PublicApiController.java`: `@GetMapping("/matches/{matchId}/tips")`; unbekanntes Spiel → HTTP 404 ohne interne Details
+- [X] T025 [P] [US3] Web-Test `src/test/java/com/example/wmtippspiel/publicapi/PublicMatchTipsWebTest.java`: Vor-Anpfiff-JSON enthält keinerlei fremde Tipps (SC-002), Nach-Anpfiff liefert Tipps, unbekannte `matchId` → 404
 
 **Checkpoint**: US1–US3 unabhängig funktionsfähig; Reveal-Sicherheit bewiesen.
 
