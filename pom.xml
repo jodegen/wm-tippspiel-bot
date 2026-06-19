@@ -33,6 +33,21 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
+        <!-- Feature 008: öffentliche Read-only-API (Servlet/Tomcat). WebClient
+             (oben, webflux) bleibt unverändert als reiner HTTP-Client. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <!-- Leichtes TTL-Caching für Spielplan/Leaderboard (FR-021) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
 
         <!-- Schema migrations: Liquibase only (Verfassung Prinzip II) -->
         <dependency>

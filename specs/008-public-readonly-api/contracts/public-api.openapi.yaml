@@ -1,0 +1,157 @@
+openapi: 3.0.3
+info:
+  title: WM-Tippspiel — Öffentliche Read-only-API
+  version: "1.0.0"
+  description: >
+    Ausschließlich lesende, öffentliche Endpoints (ohne Authentifizierung) für
+    die externe Read-only-Website. Nur GET. Keine sensiblen Felder (keine
+    Discord-user_id, E-Mail, Tokens, interne IDs). Zeitpunkte in UTC.
+servers:
+  - url: /api/public
+paths:
+  /schedule:
+    get:
+      summary: Vollständiger Spielplan (optional gefiltert)
+      parameters:
+        - { name: stage,    in: query, required: false, schema: { type: string }, description: Turnierphase, z. B. GROUP_STAGE }
+        - { name: group,    in: query, required: false, schema: { type: string }, description: Gruppen-Label }
+        - { name: matchday, in: query, required: false, schema: { type: integer }, description: Spieltag }
+      responses:
+        "200":
+          description: Liste aller (bzw. gefilterter) Spiele; leere Liste statt Fehler.
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/Match" } }
+  /matches/live:
+    get:
+      summary: Aktuell laufende Spiele mit aktuellem Stand
+      responses:
+        "200":
+          description: Nur Spiele mit Status IN_PLAY; leere Liste, wenn keines läuft.
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/LiveMatch" } }
+  /leaderboard:
+    get:
+      summary: Vollständige Rangliste
+      responses:
+        "200":
+          description: Nach Rang sortiert; exakte Treffer aus direktem Ergebnisvergleich.
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/LeaderboardRow" } }
+  /matches/{matchId}/tips:
+    get:
+      summary: Abgegebene Tipps eines Spiels — NUR nach Anpfiff (kickoff & revealed)
+      parameters:
+        - { name: matchId, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        "200":
+          description: >
+            released=false (und tips=[]) solange now()<kickoff ODER nicht
+            revealed. released=true mit Tipps erst danach.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MatchTips" }
+        "404": { description: Spiel unbekannt (ohne interne Details) }
+  /players/{publicId}:
+    get:
+      summary: Öffentliches Spielerprofil über stabilen, nicht-sensiblen Identifier
+      parameters:
+        - { name: publicId, in: path, required: true, schema: { type: string }, description: HMAC-abgeleiteter, nicht zurückrechenbarer Identifier (NICHT die Discord-ID) }
+      responses:
+        "200":
+          description: Profil inkl. Statistik, Verteilung, best/worst, Historie (nur gewertete Tipps).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Profile" }
+        "404": { description: Identifier unbekannt (ohne interne Details) }
+components:
+  schemas:
+    Match:
+      type: object
+      properties:
+        matchId:   { type: integer, format: int64 }
+        home:      { type: string }
+        away:      { type: string }
+        kickoffUtc:{ type: string, format: date-time, description: UTC ISO-8601 }
+        stage:     { type: string }
+        group:     { type: string, nullable: true }
+        tvChannel: { type: string, nullable: true }
+        oddsHome:  { type: number, nullable: true }
+        oddsDraw:  { type: number, nullable: true }
+        oddsAway:  { type: number, nullable: true }
+        homeScore: { type: integer, nullable: true }
+        awayScore: { type: integer, nullable: true }
+        status:    { type: string, enum: [SCHEDULED, IN_PLAY, FINISHED, POSTPONED, CANCELLED] }
+        matchday:  { type: integer, nullable: true }
+      required: [matchId, home, away, kickoffUtc, stage, status]
+    LiveMatch:
+      type: object
+      properties:
+        matchId:   { type: integer, format: int64 }
+        home:      { type: string }
+        away:      { type: string }
+        kickoffUtc:{ type: string, format: date-time }
+        homeScore: { type: integer, nullable: true }
+        awayScore: { type: integer, nullable: true }
+        status:    { type: string, enum: [IN_PLAY] }
+      required: [matchId, home, away, kickoffUtc, status]
+    LeaderboardRow:
+      type: object
+      properties:
+        rank:        { type: integer }
+        displayName: { type: string }
+        points:      { type: integer }
+        exactHits:   { type: integer }
+        rankChange:  { type: string, description: "NEU / ↑n / ↓n / –" }
+      required: [rank, displayName, points, exactHits, rankChange]
+    MatchTips:
+      type: object
+      properties:
+        matchId:  { type: integer, format: int64 }
+        released: { type: boolean, description: true nur wenn now()>=kickoff UND revealed }
+        tips:     { type: array, items: { $ref: "#/components/schemas/PublicTip" }, description: leer solange released=false }
+      required: [matchId, released, tips]
+    PublicTip:
+      type: object
+      properties:
+        displayName: { type: string }
+        tipHome:     { type: integer }
+        tipAway:     { type: integer }
+        points:      { type: integer, nullable: true, description: nur bei bereits gewertetem Spiel }
+      required: [displayName, tipHome, tipAway]
+    Profile:
+      type: object
+      properties:
+        publicId:       { type: string }
+        displayName:    { type: string }
+        rank:           { type: integer, nullable: true }
+        points:         { type: integer }
+        exactHits:      { type: integer }
+        evaluatedTips:  { type: integer }
+        hitRatePercent: { type: integer, nullable: true, description: null bei 0 Tipps }
+        distribution:   { $ref: "#/components/schemas/PointDistribution" }
+        bestTip:        { $ref: "#/components/schemas/ProfileTip", nullable: true }
+        worstTip:       { $ref: "#/components/schemas/ProfileTip", nullable: true }
+        history:        { type: array, items: { $ref: "#/components/schemas/ProfileTip" } }
+      required: [publicId, displayName, points, exactHits, evaluatedTips, distribution, history]
+    ProfileTip:
+      type: object
+      properties:
+        home:       { type: string }
+        away:       { type: string }
+        tipHome:    { type: integer }
+        tipAway:    { type: integer }
+        resultHome: { type: integer, nullable: true }
+        resultAway: { type: integer, nullable: true }
+        points:     { type: integer }
+      required: [home, away, tipHome, tipAway, points]
+    PointDistribution:
+      type: object
+      properties:
+        p4: { type: integer }
+        p3: { type: integer }
+        p2: { type: integer }
+        p0: { type: integer }
+      required: [p4, p3, p2, p0]

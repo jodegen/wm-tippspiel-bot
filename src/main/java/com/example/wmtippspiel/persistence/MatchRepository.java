@@ -86,6 +86,13 @@ public class MatchRepository {
                 .list();
     }
 
+    /** Alle Spiele außer abgesagten, nach Anpfiff sortiert (F008 — öffentlicher Spielplan, read-only). */
+    public List<Match> findAll() {
+        return jdbc.sql("SELECT * FROM matches WHERE status <> 'CANCELLED' ORDER BY kickoff ASC")
+                .query(MatchRepository::map)
+                .list();
+    }
+
     /** Aktuell laufende Spiele (Status IN_PLAY), nach Anpfiff sortiert (F9 — LIVE-Bestimmung). */
     public List<Match> findInPlay() {
         return jdbc.sql("SELECT * FROM matches WHERE status = 'IN_PLAY' ORDER BY kickoff ASC")
