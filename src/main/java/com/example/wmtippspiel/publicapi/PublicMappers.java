@@ -93,7 +93,10 @@ public final class PublicMappers {
                 row.tipAway(),
                 row.resultHome(),
                 row.resultAway(),
-                row.points());
+                row.points(),
+                row.matchId(),
+                row.kickoffUtc(),
+                row.stage());
     }
 
     public static ProfileDto toProfileDto(String publicId, UserProfile p, List<ProfileTipRow> history) {

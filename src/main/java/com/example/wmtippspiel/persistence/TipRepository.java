@@ -122,7 +122,8 @@ public class TipRepository {
                         SELECT m.home, m.away,
                                t.home_score AS th, t.away_score AS ta,
                                m.home_score AS mh, m.away_score AS ma,
-                               t.points
+                               t.points,
+                               m.id AS match_id, m.kickoff, m.stage
                         FROM tips t
                         JOIN matches m ON m.id = t.match_id
                         WHERE t.user_id = :u AND m.evaluated = TRUE
@@ -133,7 +134,10 @@ public class TipRepository {
                         rs.getString("home"), rs.getString("away"),
                         rs.getInt("th"), rs.getInt("ta"),
                         (Integer) rs.getObject("mh"), (Integer) rs.getObject("ma"),
-                        rs.getInt("points")))
+                        rs.getInt("points"),
+                        rs.getLong("match_id"),
+                        rs.getObject("kickoff", OffsetDateTime.class).toInstant(),
+                        rs.getString("stage")))
                 .list();
     }
 

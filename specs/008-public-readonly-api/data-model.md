@@ -94,7 +94,10 @@ aus `home_score/away_score` (von F9 live gepflegt).
 ### ProfileTipDto
 
 home, away, tipHome, tipAway, resultHome (Integer\|null), resultAway
-(Integer\|null), points.
+(Integer\|null), points, matchId (int64), kickoffUtc (UTC, ISO-8601),
+stage (gleiche Werte wie im Spielplan). `matchId`/`kickoffUtc`/`stage` stammen
+aus dem zugehörigen Spiel (Unterscheidung von Wiederholungsbegegnungen,
+Verlinkung); `matchId` passt zu `GET /matches/{matchId}/tips`.
 
 ### PointDistributionDto
 

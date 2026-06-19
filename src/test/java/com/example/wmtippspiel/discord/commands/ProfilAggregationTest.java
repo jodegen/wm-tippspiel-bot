@@ -26,7 +26,8 @@ class ProfilAggregationTest {
     }
 
     private static ProfileTipRow tip(int points) {
-        return new ProfileTipRow("Home", "Away", 1, 0, 1, 0, points);
+        return new ProfileTipRow("Home", "Away", 1, 0, 1, 0, points,
+                100L, java.time.Instant.parse("2026-06-20T19:00:00Z"), "GROUP_STAGE");
     }
 
     @Test
@@ -34,8 +35,10 @@ class ProfilAggregationTest {
     void fullProfile() {
         RankedRow mine = ranked("u1", 2, 13, 2, 5);
         List<ProfileTipRow> tips = List.of(
-                new ProfileTipRow("A", "B", 2, 1, 2, 1, 4),  // exakt
-                new ProfileTipRow("C", "D", 1, 0, 1, 0, 4),  // exakt
+                new ProfileTipRow("A", "B", 2, 1, 2, 1, 4,
+                        101L, java.time.Instant.parse("2026-06-21T19:00:00Z"), "GROUP_STAGE"),  // exakt
+                new ProfileTipRow("C", "D", 1, 0, 1, 0, 4,
+                        102L, java.time.Instant.parse("2026-06-22T19:00:00Z"), "GROUP_STAGE"),  // exakt
                 tip(3), tip(2), tip(0));
 
         UserProfile p = ProfileStats.build("Alice", mine, tips);

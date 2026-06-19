@@ -79,10 +79,15 @@ class PublicMappersTest {
     @Test
     @DisplayName("ProfileDto leakt keine sensiblen Felder")
     void profileDtoIsClean() throws Exception {
-        ProfileTipRow row = new ProfileTipRow("Deutschland", "Frankreich", 2, 1, 2, 1, 4);
+        ProfileTipRow row = new ProfileTipRow("Deutschland", "Frankreich", 2, 1, 2, 1, 4,
+                4711L, Instant.parse("2026-06-20T19:00:00Z"), "GROUP_STAGE");
         UserProfile profile = ProfileStats.build("Alice", null, List.of(row));
         ProfileDto dto = PublicMappers.toProfileDto("pub-abc", profile, List.of(row));
         assertNoForbidden(json(dto));
+        // Spielbezug ist vorhanden und unterscheidet Wiederholungsbegegnungen
+        assertThat(dto.history().get(0).matchId()).isEqualTo(4711L);
+        assertThat(dto.history().get(0).stage()).isEqualTo("GROUP_STAGE");
+        assertThat(dto.history().get(0).kickoffUtc()).isEqualTo(Instant.parse("2026-06-20T19:00:00Z"));
     }
 
     @Test

@@ -147,7 +147,10 @@ components:
         resultHome: { type: integer, nullable: true }
         resultAway: { type: integer, nullable: true }
         points:     { type: integer }
-      required: [home, away, tipHome, tipAway, points]
+        matchId:    { type: integer, format: int64, description: "Öffentliche Fixture-ID; passt zu GET /matches/{matchId}/tips" }
+        kickoffUtc: { type: string, format: date-time, description: "Anstoßzeit in UTC (ISO-8601)" }
+        stage:      { type: string, description: "Turnierphase, gleiche Werte wie im Spielplan", example: GROUP_STAGE }
+      required: [home, away, tipHome, tipAway, points, matchId, kickoffUtc, stage]
     PointDistribution:
       type: object
       properties:
