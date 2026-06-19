@@ -76,14 +76,30 @@ public class FootballDataClient {
 
         Integer homeScore = null;
         Integer awayScore = null;
-        if (m.get("score") instanceof Map<?, ?> score
-                && score.get("fullTime") instanceof Map<?, ?> fullTime) {
-            homeScore = asInt(fullTime.get("home"));
-            awayScore = asInt(fullTime.get("away"));
+        com.example.wmtippspiel.domain.model.MatchWinner winner = null;
+        if (m.get("score") instanceof Map<?, ?> score) {
+            if (score.get("fullTime") instanceof Map<?, ?> fullTime) {
+                homeScore = asInt(fullTime.get("home"));
+                awayScore = asInt(fullTime.get("away"));
+            }
+            winner = mapWinner(score.get("winner"));
         }
 
         return new Match(id, home, away, kickoff, stage, groupLabel,
-                null, null, null, null, homeScore, awayScore, status, false, false, matchday);
+                null, null, null, null, homeScore, awayScore, status, false, false, matchday, winner);
+    }
+
+    /** football-data {@code score.winner} (HOME_TEAM/AWAY_TEAM/DRAW) → {@link com.example.wmtippspiel.domain.model.MatchWinner}; sonst null. */
+    private static com.example.wmtippspiel.domain.model.MatchWinner mapWinner(Object apiWinner) {
+        if (!(apiWinner instanceof String s)) {
+            return null;
+        }
+        return switch (s) {
+            case "HOME_TEAM" -> com.example.wmtippspiel.domain.model.MatchWinner.HOME_TEAM;
+            case "AWAY_TEAM" -> com.example.wmtippspiel.domain.model.MatchWinner.AWAY_TEAM;
+            case "DRAW" -> com.example.wmtippspiel.domain.model.MatchWinner.DRAW;
+            default -> null;
+        };
     }
 
     private static String teamName(Object team) {
@@ -102,6 +118,7 @@ public class FootballDataClient {
             return Stage.GROUP_STAGE;
         }
         return switch (apiStage) {
+            case "LAST_32" -> Stage.LAST_32;
             case "LAST_16" -> Stage.LAST_16;
             case "QUARTER_FINALS", "QUARTER_FINAL" -> Stage.QUARTER_FINAL;
             case "SEMI_FINALS", "SEMI_FINAL" -> Stage.SEMI_FINAL;

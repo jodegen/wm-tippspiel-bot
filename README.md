@@ -166,6 +166,7 @@ nur `GET`, ohne Authentifizierung, ohne Schreibpfade.
 | `GET /api/public/schedule[?stage=&group=&matchday=]` | Spielplan (vollständig/gefiltert), Anstoß in UTC |
 | `GET /api/public/matches/live` | Aktuell laufende Spiele mit Stand |
 | `GET /api/public/leaderboard` | Rangliste (Punkte, exakte Treffer, Rang-Veränderung) |
+| `GET /api/public/bracket` | K.o.-Turnierbaum (6 Runden) mit Teams/Platzhaltern, Ergebnis, Status, FIFA-Match-Nr und Kanten; Gewinner rücken zur Laufzeit nach |
 | `GET /api/public/matches/{matchId}/tips` | Tipps eines Spiels — **erst nach Anpfiff** (`kickoff` & `revealed`) |
 | `GET /api/public/players/{publicId}` | Spielerprofil über stabilen, nicht-sensiblen Identifier |
 

@@ -1,0 +1,112 @@
+openapi: 3.0.3
+info:
+  title: WM-Tippspiel — Öffentlicher Bracket-Endpoint
+  version: "1.0.0"
+  description: >
+    Rein lesender Endpoint (Feature 010) für den kompletten K.o.-Turnierbaum der
+    WM 2026. Teil der bestehenden öffentlichen API unter /api/public. Read-only,
+    ohne Auth, nur GET, keine sensiblen Felder. CORS identisch zu /api/public/**.
+servers:
+  - url: /
+paths:
+  /api/public/bracket:
+    get:
+      tags: [Öffentliche API]
+      summary: K.o.-Turnierbaum (Bracket)
+      description: >
+        Liefert den vollständigen Baum: sechs Runden mit allen Spielen, je Spiel
+        die zwei Beteiligten (Team oder Platzhalter), Ergebnis, Status, FIFA-Match-
+        Nummer und die Verknüpfung zum nächsten Spiel. Vor Ende der Gruppenphase
+        vollständige Struktur mit Platzhaltern. Gewinner rücken zur Laufzeit nach
+        (nicht persistiert).
+      operationId: getBracket
+      responses:
+        "200":
+          description: Vollständiger Turnierbaum (immer alle 6 Runden).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bracket"
+components:
+  schemas:
+    Bracket:
+      type: object
+      required: [rounds]
+      properties:
+        rounds:
+          type: array
+          description: Genau 6 Runden in fester Reihenfolge.
+          items:
+            $ref: "#/components/schemas/BracketRound"
+    BracketRound:
+      type: object
+      required: [stage, label, matches]
+      properties:
+        stage:
+          type: string
+          enum: [LAST_32, LAST_16, QUARTER_FINALS, SEMI_FINALS, THIRD_PLACE, FINAL]
+          example: LAST_32
+        label:
+          type: string
+          example: Sechzehntelfinale
+        matches:
+          type: array
+          items:
+            $ref: "#/components/schemas/BracketMatch"
+    BracketMatch:
+      type: object
+      required: [fifaMatchNo, home, away, sourceMatchNos]
+      properties:
+        fifaMatchNo:
+          type: integer
+          description: Stabile FIFA-Match-Nummer 73–104.
+          example: 89
+        matchId:
+          type: integer
+          format: int64
+          nullable: true
+          description: Reale football-data-Fixture-ID, sofern ein Spiel zugeordnet ist.
+        home:
+          $ref: "#/components/schemas/BracketParticipant"
+        away:
+          $ref: "#/components/schemas/BracketParticipant"
+        homeScore:
+          type: integer
+          nullable: true
+        awayScore:
+          type: integer
+          nullable: true
+        status:
+          type: string
+          nullable: true
+          enum: [SCHEDULED, IN_PLAY, FINISHED, POSTPONED, CANCELLED]
+        winner:
+          type: string
+          nullable: true
+          enum: [HOME_TEAM, AWAY_TEAM]
+          description: Gesetzt, sobald das Spiel entschieden ist (inkl. Verlängerung/Elfmeter).
+        sourceMatchNos:
+          type: array
+          items:
+            type: integer
+          description: 0 Einträge (LAST_32) oder genau 2 (Quell-Matches).
+          example: [74, 77]
+        nextMatchNo:
+          type: integer
+          nullable: true
+          description: Ziel-Match; null für FINAL (104) und THIRD_PLACE (103).
+          example: 97
+    BracketParticipant:
+      type: object
+      description: >
+        Genau eines von teamName/placeholder ist gesetzt. teamName, wenn das Team
+        feststeht; sonst placeholder mit beschreibendem Label.
+      properties:
+        teamName:
+          type: string
+          nullable: true
+          example: Deutschland
+        placeholder:
+          type: string
+          nullable: true
+          example: Sieger Gruppe A

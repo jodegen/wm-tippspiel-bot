@@ -28,25 +28,38 @@ public record Match(
         MatchStatus status,
         boolean revealed,
         boolean evaluated,
-        Integer matchday) {
+        Integer matchday,
+        MatchWinner winner) {
 
     private static final String TBD = "TBD";
 
     /**
-     * Abwärtskompatibler Konstruktor ohne {@code matchday} (Default {@code null}) –
-     * hält bestehende Aufrufer/Tests unverändert lauffähig.
+     * Abwärtskompatibler Konstruktor ohne {@code matchday}/{@code winner}
+     * (Default {@code null}) – hält bestehende Aufrufer/Tests unverändert lauffähig.
      */
     public Match(long id, String home, String away, Instant kickoff, Stage stage, String groupLabel,
                  String channel, BigDecimal oddsHome, BigDecimal oddsDraw, BigDecimal oddsAway,
                  Integer homeScore, Integer awayScore, MatchStatus status, boolean revealed, boolean evaluated) {
         this(id, home, away, kickoff, stage, groupLabel, channel, oddsHome, oddsDraw, oddsAway,
-                homeScore, awayScore, status, revealed, evaluated, null);
+                homeScore, awayScore, status, revealed, evaluated, null, null);
+    }
+
+    /**
+     * Abwärtskompatibler Konstruktor mit {@code matchday}, aber ohne {@code winner}
+     * (Default {@code null}).
+     */
+    public Match(long id, String home, String away, Instant kickoff, Stage stage, String groupLabel,
+                 String channel, BigDecimal oddsHome, BigDecimal oddsDraw, BigDecimal oddsAway,
+                 Integer homeScore, Integer awayScore, MatchStatus status, boolean revealed, boolean evaluated,
+                 Integer matchday) {
+        this(id, home, away, kickoff, stage, groupLabel, channel, oddsHome, oddsDraw, oddsAway,
+                homeScore, awayScore, status, revealed, evaluated, matchday, null);
     }
 
     /** Kopie mit gesetztem TV-Sender (für das manuell gepflegte Mapping beim Sync). */
     public Match withChannel(String newChannel) {
         return new Match(id, home, away, kickoff, stage, groupLabel, newChannel,
-                oddsHome, oddsDraw, oddsAway, homeScore, awayScore, status, revealed, evaluated, matchday);
+                oddsHome, oddsDraw, oddsAway, homeScore, awayScore, status, revealed, evaluated, matchday, winner);
     }
 
     /** Beide Teilnehmer stehen fest (keine "TBD"-Begegnung). */
