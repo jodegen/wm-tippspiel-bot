@@ -188,6 +188,20 @@ Reverse-Proxy mit TLS betreiben.
 > API-(Sub-)Domain **alle** Pfade ans Backend. Wird nur `/api/public/**`
 > weitergeleitet, müssen `/swagger-ui/**`, `/v3/api-docs` und `/webjars/**`
 > zusätzlich geroutet werden, sonst bleibt die UI leer.
+>
+> **„Failed to fetch" in der Swagger-UI** (Mixed Content): Hinter einem
+> TLS-terminierenden Proxy muss dieser die Forwarded-Header setzen, damit das
+> Backend `https`/den externen Host kennt (sonst erzeugt es eine
+> `http://localhost:8080`-Server-URL, die der Browser blockt):
+> ```nginx
+> proxy_set_header Host              $host;
+> proxy_set_header X-Forwarded-Proto $scheme;   # -> https
+> proxy_set_header X-Forwarded-Host  $host;
+> proxy_set_header X-Forwarded-For   $remote_addr;
+> ```
+> Das Backend wertet diese via `server.forward-headers-strategy=framework` aus.
+> Alternativ/als Garantie `PUBLIC_API_PUBLIC_BASE_URL` (z. B. `https://api.…`)
+> setzen — dann wird diese URL fest als OpenAPI-Server hinterlegt.
 
 ## Betriebshinweise
 

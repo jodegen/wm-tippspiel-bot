@@ -21,6 +21,10 @@ spring:
 
 server:
   port: ${SERVER_PORT:8080}
+  # Hinter einem TLS-terminierenden Reverse-Proxy: X-Forwarded-*-Header auswerten,
+  # damit erzeugte URLs (u. a. die OpenAPI-server-URL) das externe https/Host
+  # widerspiegeln statt http://localhost:8080 (sonst Mixed-Content in Swagger-UI).
+  forward-headers-strategy: framework
 
 app:
   timezone-display: ${APP_TIMEZONE_DISPLAY:Europe/Berlin}
@@ -31,6 +35,10 @@ app:
     id-secret: ${PUBLIC_API_ID_SECRET:}
     # Kurze Cache-TTL für Spielplan/Leaderboard (FR-021).
     cache-ttl-seconds: ${PUBLIC_API_CACHE_TTL_SECONDS:5}
+    # Optional: explizite öffentliche Basis-URL für die OpenAPI-server-URL
+    # (z. B. https://api.xenoria.de). Nur nötig, falls die X-Forwarded-Header
+    # nicht greifen; leer = automatisch aus dem Request abgeleitet.
+    public-base-url: ${PUBLIC_API_PUBLIC_BASE_URL:}
   scoring:
     # Rückwirkende Punkte-Neuberechnung beim App-Start (F-006/CHECK24-Umstellung).
     # Idempotent — kann nach erfolgter Migration auf false gesetzt werden.
