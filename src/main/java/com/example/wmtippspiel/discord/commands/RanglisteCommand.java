@@ -1,6 +1,7 @@
 package com.example.wmtippspiel.discord.commands;
 
 import com.example.wmtippspiel.discord.render.RanglisteEmbed;
+import com.example.wmtippspiel.discord.render.WebsiteLinks;
 import com.example.wmtippspiel.persistence.TipRepository;
 
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -15,13 +16,17 @@ public class RanglisteCommand {
 
     private final TipRepository tips;
     private final RanglisteEmbed embed;
+    private final WebsiteLinks websiteLinks;
 
-    public RanglisteCommand(TipRepository tips, RanglisteEmbed embed) {
+    public RanglisteCommand(TipRepository tips, RanglisteEmbed embed, WebsiteLinks websiteLinks) {
         this.tips = tips;
         this.embed = embed;
+        this.websiteLinks = websiteLinks;
     }
 
     public void handle(SlashCommandInteractionEvent event) {
-        event.replyEmbeds(embed.build(tips.leaderboard())).queue();
+        // Feature 009: Link zur vollständigen Web-Tabelle (null, wenn keine Basis-URL konfiguriert).
+        String leaderboardUrl = websiteLinks.leaderboardUrl().orElse(null);
+        event.replyEmbeds(embed.build(tips.leaderboard(), leaderboardUrl)).queue();
     }
 }

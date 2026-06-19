@@ -12,6 +12,11 @@ import org.springframework.stereotype.Component;
  * Baut das /profil-Embed (F13) im gemeinsamen {@link EmbedStyle}: prominenter
  * Rang-Header mit Medaille, Avatar als Thumbnail, eine Balken-Visualisierung der
  * Punktstufen und kompakte Karten für besten/schwächsten Tipp.
+ *
+ * <p>Feature 009: Ist eine Profil-URL übergeben, wird am Ende ein klickbarer Link zur
+ * ausführlichen Web-Profilansicht ergänzt (FR-002/FR-003) — auch im „noch keine Tipps"-
+ * Pfad. Der Linktext ist eine kurze, feste Konstante (FR-010). In der URL steckt nur der
+ * nicht-reversible {@code publicId}, nie die Discord-ID (FR-009, vom Aufrufer gesetzt).
  */
 @Component
 public class ProfilEmbed {
@@ -27,13 +32,14 @@ public class ProfilEmbed {
         this.style = style;
     }
 
-    public MessageEmbed build(UserProfile p, String avatarUrl) {
+    public MessageEmbed build(UserProfile p, String avatarUrl, String profileUrl) {
         EmbedBuilder embed = style.base("Profil · " + p.username());
         if (avatarUrl != null) {
             embed.setThumbnail(avatarUrl);
         }
         if (p.isEmpty()) {
             embed.setDescription("Noch keine Tipps abgegeben. Mit `/tipp` geht's los! 🎯");
+            addProfileLink(embed, profileUrl);
             return embed.build();
         }
 
@@ -56,7 +62,34 @@ public class ProfilEmbed {
         if (p.worst() != null && p.evaluatedTips() > 1) {
             embed.addField("🥶 Schwächster Tipp", tipCard(p.worst()), false);
         }
+        addProfileLink(embed, profileUrl);
         return embed.build();
+    }
+
+    /** Hängt – wenn vorhanden – einen klickbaren Link zur Web-Profilansicht ans Ende an. */
+    private static void addProfileLink(EmbedBuilder embed, String profileUrl) {
+        if (profileUrl == null || profileUrl.isBlank()) {
+            return;
+        }
+        embed.addField(EmbedBuilder.ZERO_WIDTH_SPACE,
+                "🔗 [Profil auf " + hostOf(profileUrl) + " ansehen](" + profileUrl + ")", false);
+    }
+
+    /** Host-Klartext für das Link-Label (Anzeige), z. B. {@code wm.xenoria.de}. */
+    private static String hostOf(String url) {
+        String h = url;
+        int scheme = h.indexOf("://");
+        if (scheme >= 0) {
+            h = h.substring(scheme + 3);
+        }
+        int slash = h.indexOf('/');
+        if (slash >= 0) {
+            h = h.substring(0, slash);
+        }
+        if (h.startsWith("www.")) {
+            h = h.substring(4);
+        }
+        return h;
     }
 
     /** Medaille für die Top-3, sonst ein neutraler Marker. */

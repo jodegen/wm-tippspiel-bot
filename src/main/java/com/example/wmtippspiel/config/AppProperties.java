@@ -10,11 +10,22 @@ public record AppProperties(
         Leaderboard leaderboard,
         FootballData footballData,
         Odds odds,
-        PublicApi publicApi) {
+        PublicApi publicApi,
+        Website website) {
 
     public record Discord(String token, String guildId, String announceChannelId, String boardChannelId,
                           String infoChannelId, String tipChannelId, String notifyRoleId,
                           String leaderboardChannelId) {
+    }
+
+    /**
+     * Konfiguration der öffentlichen Website (Feature 009).
+     *
+     * @param baseUrl Basis-URL der öffentlichen Website (z. B. {@code https://wm.xenoria.de}).
+     *                Leer ⇒ Website-Hinweise/Links in den Discord-Ausgaben werden ausgelassen.
+     *                Bewusst getrennt von {@code app.public-api.public-base-url} (API-Host).
+     */
+    public record Website(String baseUrl) {
     }
 
     /**

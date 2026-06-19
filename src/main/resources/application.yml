@@ -39,6 +39,12 @@ app:
     # (z. B. https://api.xenoria.de). Nur nötig, falls die X-Forwarded-Header
     # nicht greifen; leer = automatisch aus dem Request abgeleitet.
     public-base-url: ${PUBLIC_API_PUBLIC_BASE_URL:}
+  website:
+    # Basis-URL der öffentlichen Website (Feature 009), z. B. https://wm.xenoria.de.
+    # Quelle für die Website-Hinweise/-Links in den Discord-Ausgaben (Board-Footer,
+    # /profil, /rangliste). Leer ⇒ Hinweise/Links werden ausgelassen (kein Fehler).
+    # Bewusst getrennt von app.public-api.public-base-url (das ist der API-Host).
+    base-url: ${WEBSITE_BASE_URL:}
   scoring:
     # Rückwirkende Punkte-Neuberechnung beim App-Start (F-006/CHECK24-Umstellung).
     # Idempotent — kann nach erfolgter Migration auf false gesetzt werden.
