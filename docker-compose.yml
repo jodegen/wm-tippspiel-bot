@@ -43,9 +43,13 @@ services:
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-wmtippspiel}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-wmtippspiel}
     # Feature 008: öffentliche Read-only-API (Servlet, Default-Port 8080).
-    # Hinter einem Reverse-Proxy (TLS) für die externe Website betreiben.
+    # Frontend + API liegen auf demselben vServer unter getrennten (Sub-)Domains.
+    # Der Port wird nur an localhost gebunden; TLS + Routing (z. B. api.meine-domain.de)
+    # macht der Reverse-Proxy auf dem Host -> Backend ist NICHT direkt aus dem Netz
+    # erreichbar (analog zur DB-Bindung oben). Falls kein Proxy genutzt wird, das
+    # "127.0.0.1:" entfernen, um den Port direkt zu veröffentlichen.
     ports:
-      - "${SERVER_PORT:-8080}:8080"
+      - "127.0.0.1:${SERVER_PORT:-8080}:8080"
     restart: unless-stopped
 
 volumes:

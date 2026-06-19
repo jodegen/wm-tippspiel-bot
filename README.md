@@ -168,8 +168,10 @@ Eigenschaften:
 - **Reveal-Schutz**: Einzeltipps werden serverseitig erst freigegeben, wenn
   `now() (UTC) ≥ kickoff` UND das Spiel `revealed` ist.
 - **Zeit**: Zeitpunkte in UTC (ISO-8601); Formatierung macht das Frontend.
-- **CORS/Caching**: CORS nur für die konfigurierten Origins (Vercel-Domain);
-  Spielplan/Leaderboard mit kurzer Cache-TTL.
+- **CORS/Caching**: Frontend und API laufen auf demselben vServer unter
+  getrennten (Sub-)Domains (z. B. `app.…` und `api.…`), daher CORS nur für die
+  konfigurierte Frontend-Origin; Spielplan/Leaderboard mit kurzer Cache-TTL.
+  Backend hinter einem Reverse-Proxy (TLS) betreiben; Port nur an `127.0.0.1`.
 
 Konfiguration (siehe `.env.example`): `SERVER_PORT`,
 `PUBLIC_API_CORS_ALLOWED_ORIGINS`, **`PUBLIC_API_ID_SECRET` (Pflicht — ohne Wert
